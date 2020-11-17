@@ -1,5 +1,5 @@
 
-
+import copy
 # class TreeEdge:
 #     def __init__(self, fatherNode, childNode, action):
 #         super(TreeEdge, self).__init__()
@@ -45,9 +45,9 @@ class TreeNode:
         for action in actions:
             newPUCT = self.children[action].PUCT()
             if newPUCT > bestPUCT:
-                bestAction = newPUCT
+                bestPUCT = newPUCT
                 bestAction = action
-        return action
+        return bestAction
 
     def isLeaf(self):
         return len(self.children) == 0
@@ -57,7 +57,7 @@ class TreeNode:
 
 
 class MCTS:
-    def __init__(self, board, eta=1.0, network):
+    def __init__(self, board, eta=1.0, network=None):
         super(MCTS, self).__init__()
         self.root = TreeNode(None, None, 0)
         self.currentRootNode = self.root
@@ -71,16 +71,24 @@ class MCTS:
         reach and expand a leaf.
         :return:
         """
+        board = copy.deepcopy(self.board) #could I use copy?
         node = self.currentRootNode
         while not node.isLeaf():
             action = node.bestActionByPUCT()
             node = node.children[action]
+            board.takeAction(action)
 
-        actions = self.board.getAvailableActions()
-        actionProbability, z = self.network.getPolicy_Value()
+
+        actions = board.getAvailableActions()
+        actionProbability, z = self.network.getPolicy_Value(board.getCurrentState())
         for action in actions:
-            node.children
-        pass
+            node.children[action] = TreeNode(node, action, actionProbability[action])
+        while node != self.currentRootNode:
+            node.N += 1
+            node.W += 1-z #in logic, 一个点的Q存的是他父亲走这一步的价值
+            node.V += node.W/node.N
+            z=1-z
+
 
     def run(self, numOfIterations):
         for i in range(numOfIterations):
