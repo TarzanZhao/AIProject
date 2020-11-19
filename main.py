@@ -6,7 +6,7 @@ import Game
 import torch
 import torch.nn
 import os
-import Training
+from Training import Training
 
 def main():
     # Training setting
@@ -26,7 +26,7 @@ def main():
     parser.add_argument('--trainround', type=int, default=1)
     parser.add_argument('--trainepochs', type=int, default=50)
 #    parser.add_argument('--modelid', type=int)
-
+    args = parser.parse_args()
 
     path = "./models" #文件夹目录
     files= os.listdir(path) #得到文件夹下的所有文件名称
@@ -43,12 +43,12 @@ def main():
 
 
     device = ('cuda' if torch.cuda.is_available() else 'cpu')
-    trainWorker = Training()
+    trainWorker = Training(args)
 
     for rd in range(args.trainround): 
         model = PolicyValueFn.PolicyValueFn(args).to(device)
         if currentModel != -1:
-            model.load_state_dict(torch.load(f'network-{currentModel}.pt'))
+            model.load_state_dict(torch.load(f'./network-{currentModel}.pt'))
         agent1 = Agent.SelfplayAgent(args.numOfIterations, model, f"selfPlay-{currentModel+1}.txt")
         b = Board.Board(args.size, args.numberForWin)
         g = Game.Game(agent0=agent1, agent1=agent1, simulator=b)
