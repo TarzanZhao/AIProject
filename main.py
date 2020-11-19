@@ -13,7 +13,7 @@ def main():
     parser.add_argument('--train-batch-size', type=int, default=15000)
     parser.add_argument('--channels', type=int, default=4)
     parser.add_argument('--size', type=int, default=8)
-    parser.add_argument('--numOfIterations', type=int, default=400)
+    parser.add_argument('--numOfIterations', type=int, default=20)
     parser.add_argument('--numberForWin', type=int, default=4)
 
     parser.add_argument('--lr', type=float, default=0.0001)

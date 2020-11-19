@@ -72,6 +72,8 @@ class Board:
                 board[action[0]][action[1]] = 1
             who ^= 1
         return board
+    def getCompleteBoard(self):
+        return self.getBoardTensor(self.actions, 0) + self.getBoardTensor(self.actions, 1)*2
 
     def getAvailableActions(self):
         """

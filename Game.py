@@ -1,3 +1,6 @@
+import torch
+import numpy
+
 class Game:
     def __init__(self, agent0, agent1, simulator):
         """
@@ -24,8 +27,16 @@ class Game:
         while not self.simulator.isFinish():
             agent = agentMap[self.simulator.getCurrentPlayer()]
             action = agent.getAction(self.simulator)
+            print("---player %d's round, take action (%d,%d) "% (self.simulator.currentPlayer, action[0], action[1]))
+#            print(bd.numpy().tolist())
             if action in self.simulator.getAvailableActions():
                 self.simulator.takeAction(action)
+            bd = self.simulator.getCompleteBoard().numpy().tolist()
+            for i in range(self.simulator.getSize()):
+                for j in range(self.simulator.getSize()):
+                    print(int(bd[i][j]), end=" ")
+                print("")
+
 
         winner = self.simulator.getWinner()
         self.agent0.finish(winner == 0)

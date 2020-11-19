@@ -19,9 +19,9 @@ class TreeNode:
         self.action = action
 
         self.P = prob
-        self.N = 0 # visiting times.
-        self.V = 0 # average value.
-        self.W = 0 # total value.
+        self.N = 1 # visiting times.
+        self.V = 0.5 # average value.
+        self.W = 0.5 # total value.
 
     def allActions(self):
         return self.children.keys()
@@ -30,7 +30,7 @@ class TreeNode:
         return self.children.values()
 
     def PUCT(self, totalN):
-        return self.V + 1.0*self.P * (totalN**0.5)/(1+self.N)
+        return self.V + 1.0*self.P * (totalN**0.5)/self.N
 
     def bestActionByPUCT(self):
         actions = self.allActions()
@@ -90,12 +90,13 @@ class MCTS:
 
     def run(self, numOfIterations, simulator, network):
         for i in range(numOfIterations):
+            #print("------iter %d"%i)
             self.expand(simulator, network)
 
     def getPolicy(self):
         node = self.currentRootNode
         actions = node.allActions()
-        totalN = 1
+        totalN = 0
         for action in actions:
             totalN += node.children[action].N**(1.0/self.eta)
         policy = {}

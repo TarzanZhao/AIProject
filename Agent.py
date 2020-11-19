@@ -45,8 +45,15 @@ class SelfplayAgent(Agent):
         for act in act_pro_pair.keys():
             policy[simulator.encodeAction(act)]=act_pro_pair[act]
         self.datalist.append((simulator.getCurrentState(), torch.tensor(policy)))
+        keys = []
+        values = []
+        for key, value in act_pro_pair.items():
+            keys.append(key)
+            values.append(value)
+        
+        action = keys[ np.random.choice(len(values), 1, p=values)[0] ]
+        return action
 
-        return max(act_pro_pair.items(), key=lambda act_pro: act_pro[1])[0]
 
 
     def finish(self, isWin):
