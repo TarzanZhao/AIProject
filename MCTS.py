@@ -1,4 +1,3 @@
-
 import copy
 # class TreeEdge:
 #     def __init__(self, fatherNode, childNode, action):
@@ -11,7 +10,6 @@ import copy
 #         self.Q =
 
 class TreeNode:
-
     def __init__(self, father, action, prob):
         super(TreeNode, self).__init__()
 

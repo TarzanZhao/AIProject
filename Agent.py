@@ -1,8 +1,8 @@
-import MCTS
 import torch
 import Board
-import numpy
+import numpy as np
 import DataStorage
+import MCTS
 
 class Agent:
     def getAction(self, simulator):
@@ -40,7 +40,7 @@ class SelfplayAgent(Agent):
         self.mcts.run(self.numofIterations,simulator,self.network)
         act_pro_pair = self.mcts.getPolicy()
 
-        policy = numpy.zeros(simulator.getSize() ** 2)
+        policy = np.zeros(simulator.getSize() ** 2)
         for act in act_pro_pair.keys():
             policy[simulator.encodeAction(act)]=act_pro_pair[act]
         self.datalist.append((simulator.getCurrentState(), torch.tensor(policy)))
@@ -51,7 +51,7 @@ class SelfplayAgent(Agent):
     def finish(self, isWin):
         if isWin:
             self.finalDataList = []
-            z = isWin = 1
+            z = 0
             for i in range(len(self.datalist)-1,-1,-1):
                 self.finalDataList.append((self.datalist[i][0],self.datalist[i][1],z))
                 z = 1 - z
@@ -65,15 +65,13 @@ class RandomAgent(Agent):
     def __init__(self):
         pass
 
+    def getAction(self, simulator):
+        list = simulator.getAvailableActions()
+        return list[np.random.randint(0,len(list))]
+
     def __str__(self):
         return "RandomAgent Instance"
 
-class HumanAnent(Agent):
-    def __init__(self):
-        pass
-
-    def __str__(self):
-        return "HumanAgent Instance"
 
 class IntelligentAgent(Agent):
     def __init__(self):
