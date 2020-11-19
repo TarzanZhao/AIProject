@@ -36,9 +36,10 @@ class PolicyValueFn(nn.Module):
         return policy, value
 
     def getPolicy_Value(self,x):
+        x = x.to('cuda')
         x= torch.unsqueeze(x,dim=0)
         x = self.forward(x)
-        return torch.squeeze(x[0],dim=0),torch.squeeze(x[1],dim=0)
+        return torch.squeeze(x[0],dim=0).to('cpu'),torch.squeeze(x[1],dim=0).to('cpu')
 
 
 class MixLoss(nn.Module):

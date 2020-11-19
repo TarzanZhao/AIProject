@@ -24,7 +24,6 @@ class Game:
         while not self.simulator.isFinish():
             agent = agentMap[self.simulator.getCurrentPlayer()]
             action = agent.getAction(self.simulator)
-            print(action)
             if action in self.simulator.getAvailableActions():
                 self.simulator.takeAction(action)
 

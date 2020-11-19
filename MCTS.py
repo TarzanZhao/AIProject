@@ -69,7 +69,6 @@ class MCTS:
         simulator = copy.deepcopy(simulator) #could I use copy?
         node = self.currentRootNode
         while not node.isLeaf():
-            print("-5")
             action = node.bestActionByPUCT()
             node = node.children[action]
             simulator.takeAction(action)
