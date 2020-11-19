@@ -47,6 +47,6 @@ class MixLoss(nn.Module):
         super(MixLoss, self).__init__()
 
     def forward(self, predPolicy,labelPolicy, predValue,labelValue):
-        valueLoss = F.mse_loss(labelValue,predValue,reduction="mean")
+        valueLoss = F.mse_loss(labelValue, predValue,reduction="mean")
         policyLoss = ((torch.log(predPolicy) * labelPolicy).sum(dim=1)).mean(dim=0)
         return valueLoss - policyLoss

@@ -43,7 +43,7 @@ def main():
 
     args.device = ('cuda' if torch.cuda.is_available() else 'cpu')
     trainWorker = Training(args)
-    model = PolicyValueFn.PolicyValueFn(args).to(args.device)
+#    model = PolicyValueFn.PolicyValueFn(args).to(args.device)
     currentModel+=1
     trainWorker.train(args.trainepochs, currentModel)
 
