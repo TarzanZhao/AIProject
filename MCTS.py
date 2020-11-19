@@ -57,30 +57,27 @@ class TreeNode:
 
 
 class MCTS:
-    def __init__(self, board, eta=1.0, network=None):
+    def __init__(self, eta=1.0, network=None):
         super(MCTS, self).__init__()
         self.root = TreeNode(None, None, 0)
         self.currentRootNode = self.root
-
-        self.board = board
-        self.network = network
         self.eta = eta
 
-    def expand(self):
+    def expand(self, simulator, network):
         """
         reach and expand a leaf.
         :return:
         """
-        board = copy.deepcopy(self.board) #could I use copy?
+        simulator = copy.deepcopy(simulator) #could I use copy?
         node = self.currentRootNode
         while not node.isLeaf():
             action = node.bestActionByPUCT()
             node = node.children[action]
-            board.takeAction(action)
+            simulator.takeAction(action)
 
 
-        actions = board.getAvailableActions()
-        actionProbability, z = self.network.getPolicy_Value(board.getCurrentState())
+        actions = simulator.getAvailableActions()
+        actionProbability, z = network.getPolicy_Value(simulator.getCurrentState())
         for action in actions:
             node.children[action] = TreeNode(node, action, actionProbability[action])
         while node != self.currentRootNode:
@@ -90,9 +87,9 @@ class MCTS:
             z=1-z
 
 
-    def run(self, numOfIterations):
+    def run(self, numOfIterations, simulator, network):
         for i in range(numOfIterations):
-            self.expand()
+            self.expand(simulator, network)
 
     def getPolicy(self):
         node = self.currentRootNode
