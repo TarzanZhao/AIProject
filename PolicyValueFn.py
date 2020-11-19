@@ -32,12 +32,8 @@ class PolicyValueFn(nn.Module):
 
         value = F.relu(self.valueFc1(x))
         value = F.softmax(self.valueFc2(value))
+
         return policy, value
-
-    def getPolicy_Value(self,state):
-        with torch.no_grad():
-            policy, value = self.forward(state)
-
 
 
 
@@ -46,8 +42,8 @@ class MixLoss(nn.Module):
         super(MixLoss, self).__init__()
 
     def forward(self, log_predPolicy,labelPolicy, predValue,labelValue):
-        valueLoss = F.mse_loss(labelValue,predValue)
-        policyLoss =
+        valueLoss = F.mse_loss(labelValue,predValue,reduction="mean")
+        policyLoss = ((log_predPolicy * labelPolicy).sum(dim=1)).mean(dim=0)
         return valueLoss - policyLoss
 
 
