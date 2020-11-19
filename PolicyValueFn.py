@@ -28,10 +28,10 @@ class PolicyValueFn(nn.Module):
         x = torch.flatten(x,dims=1)
 
         policy = F.relu(self.policyFc1(x))
-        policy = F.log_softmax(self.policyFc2(policy))
+        policy = F.softmax(self.policyFc2(policy))
 
         value = F.relu(self.valueFc1(x))
-        value = F.softmax(self.valueFc2(value))
+        value = F.sigmoid(self.valueFc2(value))
 
         return policy, value
 
@@ -41,25 +41,7 @@ class MixLoss(nn.Module):
     def __init__(self):
         super(MixLoss, self).__init__()
 
-    def forward(self, log_predPolicy,labelPolicy, predValue,labelValue):
+    def forward(self, predPolicy,labelPolicy, predValue,labelValue):
         valueLoss = F.mse_loss(labelValue,predValue,reduction="mean")
-        policyLoss = ((log_predPolicy * labelPolicy).sum(dim=1)).mean(dim=0)
+        policyLoss = ((torch.log(predPolicy) * labelPolicy).sum(dim=1)).mean(dim=0)
         return valueLoss - policyLoss
-
-
-class SelfPlayDataset(torch.utils.data.Dataset):
-    def __init__(self,path):
-        file = open(path)
-
-        self.dataList = [] # need to continue
-
-
-    def __len__(self):
-        return len(self.dataList)
-
-    def __getitem__(self, item):
-        data = self.dataList[item]
-        state = torch.tensor(data[0],dtype=torch.float)
-        labelPolicy = torch.tensor(data[1],dtype=torch.float)
-        labelValue = torch.tensor(data[2],dtype=torch.float)
-

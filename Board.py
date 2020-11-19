@@ -121,10 +121,12 @@ class Board:
         Assume the winner has been decided.
         :return: 0/1 for winner.
         """
-        if len(self.actions)==self.boardSize**2:
+        if self.isWin(0):
+            return 0
+        elif self.isWin(1):
+            return 1
+        elif len(self.actions)==self.boardSize**2:
             return np.random.randint(0, 2)
-        return 0 if self.isWin(0) else 1
-
 
     def finish(self):
         """

@@ -45,7 +45,7 @@ class SelfplayAgent(Agent):
             policy[simulator.encodeAction(act)]=act_pro_pair[act]
         self.datalist.append((simulator.getCurrentState(), torch.tensor(policy)))
 
-        return max(act_pro_pair.items(), key=lambda act_pro: act_pro[1])
+        return max(act_pro_pair.items(), key=lambda act_pro: act_pro[1])[0]
 
 
     def finish(self, isWin):
