@@ -10,6 +10,10 @@ def saveData(dataList, file):
     """
     dataForSave = []
     for data in dataList:
+        print(len(data))
+        print(data[0].size(),data[1].size())
+        print(data[2].size())
+
         dataForSave.append( (data[0].numpy().tolist(), data[1].numpy().tolist(), data[2].numpy().tolist()) )
     with open(file, "w") as F:
         F.write(json.dumps(dataForSave))

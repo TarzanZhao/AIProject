@@ -30,6 +30,7 @@ class SelfplayAgent(Agent):
         self.network = network
         self.mcts = MCTS.MCTS()
         self.path = path
+        self.finalDataList = []
         pass
 
     def init(self):
@@ -37,9 +38,9 @@ class SelfplayAgent(Agent):
         self.mcts = MCTS.MCTS()
 
     def getAction(self, simulator):
+
         self.mcts.run(self.numofIterations,simulator,self.network)
         act_pro_pair = self.mcts.getPolicy()
-
         policy = np.zeros(simulator.getSize() ** 2)
         for act in act_pro_pair.keys():
             policy[simulator.encodeAction(act)]=act_pro_pair[act]
@@ -50,12 +51,13 @@ class SelfplayAgent(Agent):
 
     def finish(self, isWin):
         if isWin:
-            self.finalDataList = []
             z = 0
             for i in range(len(self.datalist)-1,-1,-1):
-                self.finalDataList.append((self.datalist[i][0],self.datalist[i][1],z))
+                self.finalDataList.append((self.datalist[i][0],self.datalist[i][1],torch.tensor(z)))
                 z = 1 - z
-            DataStorage.saveData(self.datalist, self.path)
+
+    def saveData(self):
+        DataStorage.saveData(self.finalDataList,self.path)
 
     def __str__(self):
         return "SelfplayAgent Instance"

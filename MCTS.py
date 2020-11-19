@@ -41,7 +41,7 @@ class TreeNode:
         bestPUCT = -1e9
         bestAction = (-1, -1)
         for action in actions:
-            newPUCT = self.children[action].PUCT()
+            newPUCT = self.children[action].PUCT(totalN=totalN)
             if newPUCT > bestPUCT:
                 bestPUCT = newPUCT
                 bestAction = action
@@ -69,6 +69,7 @@ class MCTS:
         simulator = copy.deepcopy(simulator) #could I use copy?
         node = self.currentRootNode
         while not node.isLeaf():
+            print("-5")
             action = node.bestActionByPUCT()
             node = node.children[action]
             simulator.takeAction(action)
@@ -79,12 +80,13 @@ class MCTS:
             actions = simulator.getAvailableActions()
             actionProbability, z = network.getPolicy_Value(simulator.getCurrentState())
             for action in actions:
-                node.children[action] = TreeNode(node, action, actionProbability[action])
+                node.children[action] = TreeNode(node, action, actionProbability[simulator.encodeAction(action)])
         while node != self.currentRootNode:
             node.N += 1
             node.W += 1-z #in logic, 一个点的Q存的是他父亲走这一步的价值
             node.V += node.W/node.N
             z=1-z
+            node = node.fatherNode
 
 
     def run(self, numOfIterations, simulator, network):
@@ -94,11 +96,13 @@ class MCTS:
     def getPolicy(self):
         node = self.currentRootNode
         actions = node.allActions()
-        totalN = 0
+        totalN = 1
         for action in actions:
             totalN += node.children[action].N**(1.0/self.eta)
         policy = {}
         for action in actions:
             policy[action] = (node.children[action].N**(1.0/self.eta) ) /totalN
+
+        self.currentRootNode = self.currentRootNode.children[max(policy.items(), key=lambda act_pro: act_pro[1])[0]]
         return policy
 

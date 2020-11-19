@@ -25,16 +25,20 @@ class PolicyValueFn(nn.Module):
     def forward(self,x):
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))
-        x = torch.flatten(x,dims=1)
+        x = torch.flatten(x,1)
 
         policy = F.relu(self.policyFc1(x))
-        policy = F.softmax(self.policyFc2(policy))
+        policy = F.softmax(self.policyFc2(policy),dim=1)
 
         value = F.relu(self.valueFc1(x))
-        value = F.sigmoid(self.valueFc2(value))
+        value = torch.sigmoid(self.valueFc2(value))
 
         return policy, value
 
+    def getPolicy_Value(self,x):
+        x= torch.unsqueeze(x,dim=0)
+        x = self.forward(x)
+        return torch.squeeze(x[0],dim=0),torch.squeeze(x[1],dim=0)
 
 
 class MixLoss(nn.Module):

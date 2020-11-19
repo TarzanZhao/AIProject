@@ -24,6 +24,7 @@ class Game:
         while not self.simulator.isFinish():
             agent = agentMap[self.simulator.getCurrentPlayer()]
             action = agent.getAction(self.simulator)
+            print(action)
             if action in self.simulator.getAvailableActions():
                 self.simulator.takeAction(action)
 
@@ -31,7 +32,6 @@ class Game:
         self.agent0.finish(winner == 0)
         self.agent1.finish(winner == 1)
         self.simulator.finish()
-
         return agentMap[winner]
 
     def __str__(self):

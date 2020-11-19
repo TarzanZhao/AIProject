@@ -50,7 +50,7 @@ class Board:
             if length>0:
                 actions.pop()
                 length -= 1
-        return torch.cat(boardList, 0)
+        return torch.stack(boardList, 0)
 
     def takeAction(self, action):
         """
@@ -65,7 +65,7 @@ class Board:
         :param actions: a list of actions.
         :return: a boardSize*boardSize tensor.
         """
-        board = torch.full((self.boardSize, self.boardSize), 0)
+        board = torch.zeros((self.boardSize, self.boardSize))
         who = 0
         for action in actions:
             if who == player:
