@@ -28,7 +28,7 @@ def main():
 #    parser.add_argument('--modelid', type=int)
     args = parser.parse_args()
 
-    path = "./models" #文件夹目录
+    path = "./"
     files= os.listdir(path) #得到文件夹下的所有文件名称
     currentModel = -1
     for file in files: 
@@ -41,27 +41,29 @@ def main():
                 currentModel = max(currentModel, int(idstr))
 
 
-
-    device = ('cuda' if torch.cuda.is_available() else 'cpu')
+    args.device = ('cuda' if torch.cuda.is_available() else 'cpu')
     trainWorker = Training(args)
+    model = PolicyValueFn.PolicyValueFn(args).to(args.device)
+    currentModel+=1
+    trainWorker.train(args.trainepochs, currentModel)
 
-    for rd in range(args.trainround): 
-        model = PolicyValueFn.PolicyValueFn(args).to(device)
-        if currentModel != -1:
-            model.load_state_dict(torch.load(f'./network-{currentModel}.pt'))
-        agent1 = Agent.SelfplayAgent(args.numOfIterations, model, f"selfPlay-{currentModel+1}.txt")
-        b = Board.Board(args.size, args.numberForWin)
-        g = Game.Game(agent0=agent1, agent1=agent1, simulator=b)
+    # for rd in range(args.trainround): 
+    #     model = PolicyValueFn.PolicyValueFn(args).to(device)
+    #     if currentModel != -1:
+    #         model.load_state_dict(torch.load(f'./network-{currentModel}.pt'))
+    #     agent1 = Agent.SelfplayAgent(args.numOfIterations, model, f"selfplay-{currentModel+1}.txt")
+    #     b = Board.Board(args.size, args.numberForWin)
+    #     g = Game.Game(agent0=agent1, agent1=agent1, simulator=b)
 
-        for i in range(1, args.epochs + 1):
-            print("epoch %d" % i)
-            g.run()
-            if i % 20 == 0:
-                agent1.saveData()
-        agent1.saveData()
+    #     for i in range(1, args.epochs + 1):
+    #         print("epoch %d" % i)
+    #         g.run()
+    #         if i % 20 == 0:
+    #             agent1.saveData()
+    #     agent1.saveData()
 
-        currentModel += 1
-        trainWorker.train(args.trainepochs, currentModel)
+    #     currentModel += 1
+    #     trainWorker.train(args.trainepochs, currentModel)
 
 if __name__ == '__main__':
     main()

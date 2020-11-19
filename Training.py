@@ -23,10 +23,10 @@ class MyDataset(Dataset):
 
                 m = torch.tensor(to).reshape((size, size))
                 if flip==1:
-                    m = torch.flip(m, dim=-1)
+                    m = m.flip(-1)
                 m = torch.rot90(m, k=rotate)
 
-                mp = np.array(size**2)
+                mp = [0 for i in range(size**2)]
                 for x in range(size):
                     for y in range(size):
 
@@ -46,11 +46,11 @@ class MyDataset(Dataset):
         
         X = self.dataList[id][0].clone()
         if trans>=4:
-            X = torch.flip(X, dim=-1)
+            X = X.flip(-1)
             trans-=4
         X = torch.rot90(X, k=trans)
-                
-        return X, Y, self.dataList[id][2]
+        
+        return X, Y #, self.dataList[id][2]
 
     def __len__(self):
         return self.len*8
@@ -64,7 +64,8 @@ class Training:
         self.arg = arg
         pass
 
-    def train(self, file, numOfEpoch, currentModel):
+    def train(self, numOfEpoch, currentModel):
+        file = f"selfplay-{currentModel}.txt"
         dataList = retrieveData(file)
         trainSet = MyDataset(dataList)
         dataloader = DataLoader(dataset=trainSet,
@@ -93,7 +94,7 @@ class Training:
             loss = 0
             cnt = 0
             for i, batch in enumerate(dataloader):
-                x, y1, y2 = batch[0].to(self.arg.device), batch[1].to(self.arg.device), batch[2].to(self.arg.device)
+                x, y1, y2 = batch[0].to(self.arg.device), batch[1].to(self.arg.device), 0 #, batch[2].to(self.arg.device)
                 z1, z2 = network(x)
                 loss = criterion(z1, y1, z2, y2)
                 total_loss += loss.item()
@@ -109,5 +110,5 @@ class Training:
             with open(trainLossFile, mode="a") as file:
                 file.write("epoch={} average_loss={}\n".format(epoch, loss))
 
-            if epoch % 10 == 9:
+            if epoch % 10 == 10:
                 torch.save(network.state_dict(), f"./network-{currentModel}.pth")
