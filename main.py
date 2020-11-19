@@ -16,7 +16,7 @@ def main():
     parser.add_argument('--size', type=int, default=8)
     parser.add_argument('--numOfIterations', type=int, default=5)
     parser.add_argument('--numberForWin', type=int, default=4)
-
+    parser.add_argument('--device',type=str,default='cpu')
     parser.add_argument('--lr', type=float, default=0.0001)
     parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--show-size', type=int, default=15000)
@@ -41,6 +41,7 @@ def main():
                 currentModel = max(currentModel, int(idstr))
 
 
+
     device = ('cuda' if torch.cuda.is_available() else 'cpu')
     trainWorker = Training()
 
@@ -61,10 +62,6 @@ def main():
 
         currentModel += 1
         trainWorker.train(args.trainepochs, currentModel)
-
-
-        
-
 
 if __name__ == '__main__':
     main()
