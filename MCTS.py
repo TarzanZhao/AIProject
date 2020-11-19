@@ -73,11 +73,13 @@ class MCTS:
             node = node.children[action]
             simulator.takeAction(action)
 
-
-        actions = simulator.getAvailableActions()
-        actionProbability, z = network.getPolicy_Value(simulator.getCurrentState())
-        for action in actions:
-            node.children[action] = TreeNode(node, action, actionProbability[action])
+        if simulator.isFinish():
+            z = 1
+        else:
+            actions = simulator.getAvailableActions()
+            actionProbability, z = network.getPolicy_Value(simulator.getCurrentState())
+            for action in actions:
+                node.children[action] = TreeNode(node, action, actionProbability[action])
         while node != self.currentRootNode:
             node.N += 1
             node.W += 1-z #in logic, 一个点的Q存的是他父亲走这一步的价值
