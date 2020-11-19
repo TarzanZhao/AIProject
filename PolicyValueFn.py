@@ -17,7 +17,7 @@ class PolicyValueFn(nn.Module):
         self.conv1 = nn.Conv2d(self.arg.channels,64,kernel_size=(3,3),padding=1)
         self.conv2 = nn.Conv2d(64,128,kernel_size=(3,3),padding=1)
         self.policyFc1 = nn.Linear(argparse.size**2*128,1000)
-        self.policyFc2 = nn.Linear(1000,argparse.size**2+1)
+        self.policyFc2 = nn.Linear(1000,argparse.size**2)
         self.valueFc1 = nn.Linear(argparse.size**2*128,100)
         self.valueFc2 = nn.Linear(100,1)
 
@@ -47,6 +47,6 @@ class MixLoss(nn.Module):
         super(MixLoss, self).__init__()
 
     def forward(self, predPolicy,labelPolicy, predValue,labelValue):
-        valueLoss = F.mse_loss(labelValue, predValue,reduction="mean")
+        valueLoss = F.mse_loss(labelValue, predValue.view_as(labelValue),reduction="mean")
         policyLoss = ((torch.log(predPolicy) * labelPolicy).sum(dim=1)).mean(dim=0)
         return valueLoss - policyLoss

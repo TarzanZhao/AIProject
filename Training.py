@@ -31,29 +31,25 @@ class MyDataset(Dataset):
                     for y in range(size):
 
                         v = m[x][y]
-                        mp[v] = x*size+y
+                        mp[v.item()] = x*size+y
                 self.map.append(mp)
 
 
 
     def __getitem__(self, index):
-#        return self.dataList[index][0], self.dataList[index][1]
         id = index//8
         trans = index%8
         
         Y = torch.zeros(self.size**2)
         for i, v in enumerate(self.dataList[id][1]):
-            Y[ self.map[trans][i] ] = v
+            Y[self.map[trans][i]] = v
         
         X = self.dataList[id][0]
         if trans>=4:
             X = X.flip(-1)
             trans-=4
         X = torch.rot90(X, k=trans, dims = (1,2))
-        print(X.size(), Y.size(), self.dataList[id][2].size())
-        if self.dataList[id][2].size()[0]==0:
-            print(self.dataList[id])
-        return X, Y, self.dataList[id][2]
+        return X, (Y, self.dataList[id][2])
 
     def __len__(self):
         return self.len*8
@@ -97,9 +93,8 @@ class Training:
             loss = 0
             cnt = 0
             for i, batch in enumerate(dataloader):
-                x, y1, y2 = batch[0].to(self.arg.device), batch[1].to(self.arg.device), batch[2].to(self.arg.device)
+                x, y1, y2 = batch[0].to(self.arg.device), batch[1][0].to(self.arg.device), batch[1][1].to(self.arg.device)
                 z1, z2 = network(x)
-                print(z1.size(), y1.size(), z2.size(), y2.size())
                 loss = criterion(z1, y1, z2, y2)
                 total_loss += loss.item()
                 optimizer.zero_grad()

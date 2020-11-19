@@ -10,7 +10,7 @@ def saveData(dataList, file):
     """
     dataForSave = []
     for data in dataList:
-        dataForSave.append( (data[0].numpy().tolist(), data[1].numpy().tolist(), data[2].numpy().tolist()) )
+        dataForSave.append((data[0].numpy().tolist(), data[1].numpy().tolist(), data[2].numpy().tolist()))
     with open(file, "w") as F:
         F.write(json.dumps(dataForSave))
 
@@ -25,5 +25,7 @@ def retrieveData(file):
     F.close()
     rawData = json.loads(dataString)
     for data in rawData:
-        dataList.append( (torch.Tensor(data[0]), torch.Tensor(data[1]), torch.Tensor(data[2])) )
+        dataList.append(tuple([torch.tensor(data[0]), torch.tensor(data[1]), torch.tensor(data[2],dtype=torch.float)]))
+    if len(dataList[len(dataList)-1])!=3:
+        print("fuck!")
     return dataList
