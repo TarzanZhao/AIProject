@@ -48,9 +48,9 @@ class MyDataset(Dataset):
         if trans>=4:
             X = X.flip(-1)
             trans-=4
-        X = torch.rot90(X, k=trans)
+        X = torch.rot90(X, k=trans,dims=(1,2))
         
-        return X, Y #, self.dataList[id][2]
+        return X, Y , self.dataList[id][2]
 
     def __len__(self):
         return self.len*8
