@@ -1,5 +1,6 @@
 import torch
 import copy
+import numpy as np
 
 class Board:
     def __init__(self, boardSize, numberForWin):
@@ -9,11 +10,29 @@ class Board:
         self.boardSize = boardSize
         self.numberForWin = numberForWin
 
-    def getCurrentPalyer(self):
+    def init(self):
+        self.currentPlayer = 0 # 0: first player, 1: second player.
+        self.actions = [] # (player, (x,y)):
+
+#    @classmethod
+    def encodeAction(self, action):
+        return self.boardSize**2 if action == (-1,-1) else action[0]*self.boardSize+action[1]
+
+#    @classmethod    
+    def decodeAction(self, code):
+        return (-1,-1) if code == self.boardSize**2 else (code//self.boardSize, code % self.boardSize )
+    
+    def getCurrentPlayer(self):
         """
         :return: 0/1 for current player.
         """
         return self.currentPlayer
+    
+    def getLastPlayer(self):
+        return self.currentPlayer^1
+
+    def getSize(self):
+        return self.boardSize
 
     def getCurrentState(self):
         """
@@ -67,11 +86,10 @@ class Board:
                     availableActions.append((i,j))
         return availableActions
 
-    def isWin(self):
+    def isWin(self, player):
         """
         :return: Boolean
         """
-        player = self.currentPlayer
         board = self.getBoardTensor(self.actions, player)
         dx = [-1,-1,-1, 0]
         dy = [-1,0,1, -1]
@@ -92,6 +110,9 @@ class Board:
                             return True
         return False
 
+    def isFinish(self):
+        b = self.isWin(0) or self.isWin(1)
+        return 1 if not b and len(self.actions)==self.boardSize**2 else b
 
 
 
@@ -100,6 +121,8 @@ class Board:
         Assume the winner has been decided.
         :return: 0/1 for winner.
         """
+        if len(self.actions)==self.boardSize**2:
+            return np.random.randint(0, 2)
         return 0 if self.isWin(0) else 1
 
 
