@@ -39,7 +39,7 @@ class PolicyValueFn(nn.Module):
         x = x.to(self.arg.device)
         x= torch.unsqueeze(x,dim=0)
         x = self.forward(x)
-        return torch.squeeze(x[0],dim=0).to(self.arg.device),torch.squeeze(x[1],dim=0).to(self.agr.device)
+        return torch.squeeze(x[0],dim=0).to('cpu'),torch.squeeze(x[1],dim=0).to('cpu')
 
 
 class MixLoss(nn.Module):
@@ -47,6 +47,6 @@ class MixLoss(nn.Module):
         super(MixLoss, self).__init__()
 
     def forward(self, predPolicy,labelPolicy, predValue,labelValue):
-        valueLoss = F.mse_loss(labelValue,predValue.view_as(labelValue),reduction="mean")
+        valueLoss = F.mse_loss(labelValue, predValue,reduction="mean")
         policyLoss = ((torch.log(predPolicy) * labelPolicy).sum(dim=1)).mean(dim=0)
         return valueLoss - policyLoss
