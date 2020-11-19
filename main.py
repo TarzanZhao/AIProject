@@ -15,7 +15,7 @@ def main():
     parser.add_argument('--size', type=int, default=8)
     parser.add_argument('--numOfIterations', type=int, default=20)
     parser.add_argument('--numberForWin', type=int, default=4)
-
+    parser.add_argument('--device',type=str,default='cpu')
     parser.add_argument('--lr', type=float, default=0.0001)
     parser.add_argument('--epochs', type=int, default=1000)
     parser.add_argument('--show-size', type=int, default=15000)
@@ -24,8 +24,8 @@ def main():
     parser.add_argument('--seed', type=int, default=1)
     args = parser.parse_args()
 
-    device = ('cuda' if torch.cuda.is_available() else 'cpu')
-    model = PolicyValueFn.PolicyValueFn(args).to(device)
+    args.device = ('cuda' if torch.cuda.is_available() else 'cpu')
+    model = PolicyValueFn.PolicyValueFn(args).to(args.device)
     agent1 = Agent.SelfplayAgent(args.numOfIterations, model, "selfPlay.txt")
     b = Board.Board(args.size, args.numberForWin)
     g = Game.Game(agent0=agent1, agent1=agent1, simulator=b)
