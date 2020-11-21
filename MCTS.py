@@ -101,7 +101,7 @@ class MCTS:
             totalN += node.children[action].N**(1.0/self.eta)
         policy = {}
         for action in actions:
-            policy[action] = (node.children[action].N**(1.0/self.eta) ) /totalN
+            policy[action] = (node.children[action].N**(1.0/self.eta))/totalN
 
         self.currentRootNode = self.currentRootNode.children[max(policy.items(), key=lambda act_pro: act_pro[1])[0]]
         return policy

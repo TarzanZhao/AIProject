@@ -64,7 +64,7 @@ class Training:
         pass
 
     def train(self, numOfEpoch, currentModel):
-        file = f"selfplay-{currentModel}.txt"
+        file = f"./selfplay/selfplay-{currentModel}.txt"
         dataList = retrieveData(file)
         trainSet = MyDataset(dataList)
         dataloader = DataLoader(dataset=trainSet,
@@ -77,18 +77,18 @@ class Training:
 
         network = PolicyValueFn(self.arg)
         if currentModel > 0:
-            network.load_state_dict(torch.load(f'network-{currentModel - 1}.pt'))
+            network.load_state_dict(torch.load(f'network/network-{currentModel - 1}.pt'))
 
         network.to(self.arg.device)
         optimizer = optim.SGD(
             network.parameters(), self.arg.lr
         )
-        trainLossFile = "./trainingloss-" + str(currentModel)
+        trainLossFile = "trainingloss/trainingloss-" + str(currentModel)
         if os.path.exists(trainLossFile):
             os.remove(trainLossFile)
             print("successfully deleted " + trainLossFile)
 
-        for epoch in range(numOfEpoch):
+        for epoch in range(1, numOfEpoch+1):
             total_loss = 0
             loss = 0
             cnt = 0
@@ -103,11 +103,12 @@ class Training:
                 cnt += 1
                 if cnt % 100 == 0:
                     with open(trainLossFile, mode="a") as file:
-                        file.write("i={} loss={}\n".format(i, loss.item()))
+                        file.write("i={} loss={:.6f}".format(i, loss.item()))
             total_loss = total_loss / cnt
-            print("epoch={} average_loss={}\n".format(epoch, total_loss))
+            print("epoch={} average_loss={:.6f}".format(epoch, total_loss))
             with open(trainLossFile, mode="a") as file:
-                file.write("epoch={} average_loss={}\n".format(epoch, loss))
+                file.write("epoch={} average_loss={:.6f}".format(epoch, loss))
 
-            if epoch % 10 == 10:
-                torch.save(network.state_dict(), f"./network-{currentModel}.pth")
+            if epoch % 10 == 0:
+                torch.save(network.state_dict(), f"network/network-{currentModel}.pt")
+        torch.save(network.state_dict(),f"network/network-{currentModel}.pt")
