@@ -1,11 +1,15 @@
-from DataStorage import retrieveData
+from DataStorage import retrieveData,getLatestNetworkID
 import torch
+import Agent
+import Board
+import Game
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from PolicyValueFn import PolicyValueFn
 from PolicyValueFn import MixLoss
+import os
 import copy
 
 class MyDataset(Dataset):
@@ -54,11 +58,7 @@ class MyDataset(Dataset):
     def __len__(self):
         return self.len*8
 
-
-import os
-
-
-class Training:
+class NetworkTraining:
     def __init__(self,arg):
         self.arg = arg
         pass
@@ -68,7 +68,7 @@ class Training:
         dataList = retrieveData(file)
         trainSet = MyDataset(dataList)
         dataloader = DataLoader(dataset=trainSet,
-                                batch_size=128,
+                                batch_size=256,
                                 num_workers=4,
                                 pin_memory=True,
                                 shuffle=True
@@ -112,3 +112,27 @@ class Training:
             if epoch % 10 == 0:
                 torch.save(network.state_dict(), f"network/network-{currentModel}.pt")
         torch.save(network.state_dict(),f"network/network-{currentModel}.pt")
+
+def Training(args):
+    currentModel = -1 if args.overwrite else getLatestNetworkID()
+    trainWorker = NetworkTraining(args)
+
+    for rd in range(1, args.trainround + 1):
+        print("round:%d" % rd)
+        model = PolicyValueFn(args).to(args.device)
+        if currentModel != -1:
+            model.load_state_dict(torch.load(f'network/network-{currentModel}.pt'))
+        agent1 = Agent.SelfplayAgent(args.numOfIterations, model, f"selfplay/selfplay-{currentModel + 1}.txt")
+        b = Board.Board(args.size, args.numberForWin)
+        g = Game.Game(agent0=agent1, agent1=agent1, simulator=b)
+
+        for i in range(1, args.epochs + 1):
+            print("epoch %d" % i)
+            g.run()
+            if i % 25 == 0:
+                agent1.saveData()
+        agent1.saveData()
+
+        currentModel += 1
+        trainWorker.train(args.trainepochs, currentModel)
+

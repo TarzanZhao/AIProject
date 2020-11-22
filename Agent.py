@@ -24,9 +24,9 @@ class Agent:
 
 
 class SelfplayAgent(Agent):
-    def __init__(self, numofIterations, network, path):
+    def __init__(self, numOfiterations, network, path):
         self.datalist = []
-        self.numofIterations = numofIterations
+        self.numOfiterations = numOfiterations
         self.network = network
         self.mcts = MCTS.MCTS()
         self.path = path
@@ -38,7 +38,7 @@ class SelfplayAgent(Agent):
         self.mcts = MCTS.MCTS()
 
     def getAction(self, simulator):
-        self.mcts.run(self.numofIterations, simulator, self.network)
+        self.mcts.run(self.numOfiterations, simulator, self.network)
         act_pro_pair = self.mcts.getPolicy()
         policy = np.zeros(simulator.getSize() ** 2)
         for act in act_pro_pair.keys():
@@ -79,8 +79,21 @@ class RandomAgent(Agent):
 
 
 class IntelligentAgent(Agent):
-    def __init__(self):
-        pass
+    def __init__(self, numOfiterations, network):
+        self.numOfiterations = numOfiterations
+        self.network = network
+        self.mcts = MCTS.MCTS()
 
+    def getAction(self, simulator):
+        self.mcts.run(self.numOfiterations,simulator,self.network)
+        act_pro_pair = self.mcts.getPolicy()
+        keys = []
+        values = []
+        for key, value in act_pro_pair.items():
+            keys.append(key)
+            values.append(value)
+        action = keys[np.random.choice(len(values), 1, p=values)[0]]
+        return action
+        
     def __str__(self):
         return "IntelligentAgent Instance"

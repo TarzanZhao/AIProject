@@ -55,7 +55,7 @@ class TreeNode:
 
 
 class MCTS:
-    def __init__(self, eta=1.0, network=None):
+    def __init__(self, eta=1.0):
         super(MCTS, self).__init__()
         self.root = TreeNode(None, None, 0)
         self.currentRootNode = self.root

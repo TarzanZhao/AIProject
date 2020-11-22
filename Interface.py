@@ -7,12 +7,13 @@ import PolicyValueFn
 import Board
 import Game
 import Agent
+from DataStorage import getLatestNetworkID
 import numpy as np
 import torch
 
 
 class GUI(QWidget):
-    def __init__(self, agent1, agent2, boardSize=15, numberForWin=5):
+    def __init__(self, agent, boardSize=15, numberForWin=5):
         super().__init__()
         self.C = 0  # 0: black, 1: white
         self.S = boardSize
@@ -23,13 +24,12 @@ class GUI(QWidget):
         self.gap = 0.4 * self.d
         self.Board = Board.Board(boardSize, numberForWin)
         self.Board.init()
-        self.agent1 = agent1
-        self.agent2 = agent2
         self.win = 0
+        self.agent = agent
         self.Restart = QPushButton("Restart", self)
         self.Restart.clicked.connect(self.OnRestart)
-        self.RestartVisualRun = QPushButton("RestartVisual", self)
-        self.RestartVisualRun.clicked.connect(self.OnRestartVisual)
+        #self.RestartVisualRun = QPushButton("RestartVisual", self)
+        #self.RestartVisualRun.clicked.connect(self.OnRestartVisual)
         self.initUI()
 
     def posToTopleft(self, pos):
@@ -69,7 +69,7 @@ class GUI(QWidget):
         self.setWindowTitle('Chess Board')
         self.show()
         self.Restart.setGeometry(QRect(900, 200, 200, 100))
-        self.RestartVisualRun.setGeometry(QRect(900, 600, 200, 100))
+        #self.RestartVisualRun.setGeometry(QRect(900, 600, 200, 100))
 
     def drawBackground(self, qp):
         pen = QPen(Qt.black, 2, Qt.SolidLine)
@@ -88,23 +88,10 @@ class GUI(QWidget):
             self.win = 1
             QMessageBox.information(self, 'result', "agent 0 win!" if self.Board.getWinner() == 0 else "agent 1 win!")
 
-    def visualizeRun(self, agent0, agent1):
-        self.Board.init()
-        agentMap = {0: agent0, 1: agent1}
-        while not self.Board.isFinish():
-            agent = agentMap[self.Board.getCurrentPlayer()]
-            action = agent.getAction(self.Board)
-            if action in self.Board.getAvailableActions():
-                self.down(action)
-        winner = self.Board.getWinner()
-        agent0.finish(winner == 0)
-        agent1.finish(winner == 1)
-        return agentMap[winner]
-
     def run(self):
         if self.win:
             return 0
-        action = self.agent2.getAction(self.Board)
+        action = self.agent.getAction(self.Board)
         self.down(action)
 
     def OnRestart(self):
@@ -112,42 +99,30 @@ class GUI(QWidget):
         self.win = 0
         self.update()
 
-    def OnRestartVisual(self):
-        self.Board.init()
-        self.agent1.init()
-        self.agent2.init()
-        self.visualizeRun(self.agent1, self.agent2)
+    #def OnRestartVisual(self):
+    #    self.Board.init()
+    #    self.agent.init()
+    #    self.agent2.init()
+    #    self.visualizeRun(self.agent1, self.agent2)
+    #def visualizeRun(self, agent0, agent1):
+    #    self.Board.init()
+    #    agentMap = {0: agent0, 1: agent1}
+    #    while not self.Board.isFinish():
+    #        agent = agentMap[self.Board.getCurrentPlayer()]
+    #        action = agent.getAction(self.Board)
+    #        if action in self.Board.getAvailableActions():
+    #            self.down(action)
+    #    winner = self.Board.getWinner()
+    #    agent0.finish(winner == 0)
+    #    agent1.finish(winner == 1)
+    #    return agentMap[winner]
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--train-batch-size', type=int, default=15000)
-    parser.add_argument('--channels', type=int, default=4)
-    parser.add_argument('--size', type=int, default=8)
-    parser.add_argument('--numOfIterations', type=int, default=20)
-    parser.add_argument('--numberForWin', type=int, default=4)
-    parser.add_argument('--device', type=str, default='cpu')
-
-    parser.add_argument('--lr', type=float, default=0.0001)
-    parser.add_argument('--epochs', type=int, default=10000)
-    parser.add_argument('--show-size', type=int, default=15000)
-    parser.add_argument('--std', type=float, default=0.01)
-    parser.add_argument('--show', type=int, default=0)
-    parser.add_argument('--seed', type=int, default=1)
-    args = parser.parse_args()
-
-    
-    args.device = ('cuda' if torch.cuda.is_available() else 'cpu')
+def Play(args):
     model = PolicyValueFn.PolicyValueFn(args)
-    agent1 = Agent.SelfplayAgent(args.numOfIterations, model, "selfPlay.txt")
-    agent2 = Agent.SelfplayAgent(args.numOfIterations, model, "selfPlay.txt")
-    b = Board.Board(args.size, args.numberForWin)
-
+    currentModel = getLatestNetworkID()
+    model.load_state_dict(torch.load(f'network/network-{currentModel}.pt',map_location=torch.device('cpu')))
+    agent = Agent.IntelligentAgent(args.numOfIterations,model)
     app = QApplication(sys.argv)
-    gui = GUI(agent1=agent1, agent2=agent1, boardSize=args.size, numberForWin=args.numberForWin)
-    gui.visualizeRun(agent1, agent1)
+    gui = GUI(agent, boardSize=args.size, numberForWin=args.numberForWin)
     sys.exit(app.exec_())
-
-
-if __name__ == '__main__':
-    main()

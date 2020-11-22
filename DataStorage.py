@@ -1,6 +1,7 @@
 import torch
 import numpy
 import json
+import os
 
 def saveData(dataList, file):
     """
@@ -26,6 +27,18 @@ def retrieveData(file):
     rawData = json.loads(dataString)
     for data in rawData:
         dataList.append(tuple([torch.tensor(data[0]), torch.tensor(data[1]), torch.tensor(data[2],dtype=torch.float)]))
-    if len(dataList[len(dataList)-1])!=3:
-        print("fuck!")
     return dataList
+
+def getLatestNetworkID():
+    path = './network'
+    files = os.listdir(path)
+    currentModel = -1
+    for file in files:
+        if not os.path.isdir(file):
+            filestr = file.split("/")[-1]
+            print(filestr)
+            if filestr.startswith("network-"):
+                idstr = filestr[8:-3]
+                print(idstr)
+                currentModel = max(currentModel, int(idstr))
+    return currentModel
