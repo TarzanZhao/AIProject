@@ -27,7 +27,12 @@ class GUI(QWidget):
         self.win = 0
         self.agent = agent
         self.Restart = QPushButton("Restart", self)
+        self.ShowValue = QPushButton("ShowValue",self)
         self.Restart.clicked.connect(self.OnRestart)
+        self.ShowValue.clicked.connect(self.OnShowValue)
+        self.value = 1
+        self.isShowValue = 1
+        self.policy = {}
         #self.RestartVisualRun = QPushButton("RestartVisual", self)
         #self.RestartVisualRun.clicked.connect(self.OnRestartVisual)
         self.initUI()
@@ -43,12 +48,36 @@ class GUI(QWidget):
         qp.begin(self)
         self.drawBackground(qp)
         c = 0
+        if self.isShowValue:
+            for action, pro in self.policy.items():
+                TL = self.posToTopleft(action)
+                blue = QColor(183, 234, 255)
+                qp.setPen(blue)
+                qp.setBrush(blue)
+                rec = QRect(TL[0], TL[1], int(2 * self.gap + 0.5), int(2 * self.gap + 0.5))
+                qp.setPen(Qt.black)
+                qp.drawEllipse(rec)
+                qp.drawText(int(TL[0]+self.gap/2+0.5),int(TL[1]+self.gap+0.5),"%.4f"%pro)
+                #qp.drawText(TL, "%.4f" %pro)
+
         for action in self.Board.actions:
             TL = self.posToTopleft(action)
+            qp.setPen(Qt.black)
             qp.setBrush(Qt.black if c == 1 else Qt.white)
             rec = QRect(TL[0], TL[1], int(2 * self.gap + 0.5), int(2 * self.gap + 0.5))
             qp.drawEllipse(rec)
             c = 1 - c
+
+        if self.isShowValue and len(self.Board.actions)>0:
+            last = self.Board.actions[-1]
+            TL = self.posToTopleft(last)
+            gold = QColor(255,255,0)
+            qp.setPen(QPen(gold,5))
+            qp.setBrush(Qt.black if c==0 else Qt.white)
+            rec = QRect(TL[0], TL[1], int(2 * self.gap + 0.5), int(2 * self.gap + 0.5))
+            qp.drawEllipse(rec)
+            if c==0:
+                qp.drawText(int(TL[0] + self.gap / 2 + 0.5), int(TL[1] + self.gap + 0.5), "%.4f" % self.policy[last])
         qp.end()
 
     def mousePressEvent(self, e):
@@ -69,6 +98,7 @@ class GUI(QWidget):
         self.setWindowTitle('Chess Board')
         self.show()
         self.Restart.setGeometry(QRect(900, 200, 200, 100))
+        self.ShowValue.setGeometry(QRect(900,500,200,100))
         #self.RestartVisualRun.setGeometry(QRect(900, 600, 200, 100))
 
     def drawBackground(self, qp):
@@ -92,12 +122,20 @@ class GUI(QWidget):
         if self.win:
             return 0
         action = self.agent.getAction(self.Board)
+        self.policy = self.agent.getActionProPair()
         self.down(action)
 
     def OnRestart(self):
         self.Board.init()
         self.win = 0
+        self.policy = {}
         self.update()
+        self.repaint()
+
+    def OnShowValue(self):
+        self.isShowValue = 1 - self.isShowValue
+        self.update()
+        self.repaint()
 
     #def OnRestartVisual(self):
     #    self.Board.init()
@@ -122,7 +160,9 @@ def Play(args):
     model = PolicyValueFn.PolicyValueFn(args)
     currentModel = getLatestNetworkID()
     model.load_state_dict(torch.load(f'network/network-{currentModel}.pt',map_location=torch.device('cpu')))
+    print(currentModel)
     agent = Agent.IntelligentAgent(args.numOfIterations,model)
     app = QApplication(sys.argv)
     gui = GUI(agent, boardSize=args.size, numberForWin=args.numberForWin)
     sys.exit(app.exec_())
+

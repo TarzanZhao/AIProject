@@ -82,18 +82,22 @@ class IntelligentAgent(Agent):
     def __init__(self, numOfiterations, network):
         self.numOfiterations = numOfiterations
         self.network = network
-        self.mcts = MCTS.MCTS()
+        self.act_pro_pair = {}
 
     def getAction(self, simulator):
-        self.mcts.run(self.numOfiterations,simulator,self.network)
-        act_pro_pair = self.mcts.getPolicy()
+        mcts = MCTS.MCTS()
+        mcts.run(self.numOfiterations,simulator,self.network)
+        self.act_pro_pair = mcts.getPolicy()
         keys = []
         values = []
-        for key, value in act_pro_pair.items():
+        for key, value in self.act_pro_pair.items():
             keys.append(key)
             values.append(value)
         action = keys[np.random.choice(len(values), 1, p=values)[0]]
         return action
-        
+
+    def getActionProPair(self):
+        return self.act_pro_pair
+
     def __str__(self):
         return "IntelligentAgent Instance"
