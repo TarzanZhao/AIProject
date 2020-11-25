@@ -10,7 +10,7 @@ import copy
 #         self.Q =
 
 class TreeNode:
-    def __init__(self, father, action, prob):
+    def __init__(self, father, action, prob, C=5):
         super(TreeNode, self).__init__()
 
         self.children = {} # (action, child)
@@ -19,9 +19,10 @@ class TreeNode:
         self.action = action
 
         self.P = prob
-        self.N = 1 # visiting times.
-        self.V = 0.5 # average value.
-        self.W = 0.5 # total value.
+        self.N = 0 # visiting times.
+        self.V = 0 # average value.
+        self.W = 0 # total value.
+        self.C = C
 
     def allActions(self):
         return self.children.keys()
@@ -30,7 +31,7 @@ class TreeNode:
         return self.children.values()
 
     def PUCT(self, totalN):
-        return self.V + 1.0*self.P * (totalN**0.5)/self.N
+        return self.V + self.C*self.P * (totalN**0.5)/(self.N+1)
 
     def bestActionByPUCT(self):
         actions = self.allActions()
@@ -74,17 +75,18 @@ class MCTS:
             simulator.takeAction(action)
 
         if simulator.isFinish():
-            z = 1
+            z = 1.0 if simulator.getWinner() == simulator.getCurrentPlayer() else -1.0
         else:
             actions = simulator.getAvailableActions()
+            network.eval()
             actionProbability, z = network.getPolicy_Value(simulator.getCurrentState())
             for action in actions:
                 node.children[action] = TreeNode(node, action, actionProbability[simulator.encodeAction(action)])
         while node != self.currentRootNode:
             node.N += 1
-            node.W += 1-z #in logic, 一个点的Q存的是他父亲走这一步的价值
-            node.V += node.W/node.N
-            z=1-z
+            node.W += -z  #in logic, 一个点的Q存的是他父亲走这一步的价值
+            node.V = node.W/node.N
+            z=-z
             node = node.fatherNode
 
 
@@ -102,7 +104,7 @@ class MCTS:
         policy = {}
         for action in actions:
             policy[action] = (node.children[action].N**(1.0/self.eta))/totalN
-
-        self.currentRootNode = self.currentRootNode.children[max(policy.items(), key=lambda act_pro: act_pro[1])[0]]
         return policy
 
+    def takeAction(self,action):
+        self.currentRootNode = self.currentRootNode.children[action]

@@ -1,8 +1,7 @@
 import torch
 import torch.nn as nn
-import torch.optim as optim
 import torch.nn.functional as F
-from torch.optim import lr_scheduler
+from torchvision.models.densenet import _DenseBlock, _Transition
 
 import torch.utils.data
 
@@ -14,24 +13,30 @@ class PolicyValueFn(nn.Module):
         """
         super(PolicyValueFn, self).__init__()
         self.arg = argparse
-        self.conv1 = nn.Conv2d(self.arg.channels,64,kernel_size=(3,3),padding=1)
-        self.conv2 = nn.Conv2d(64,128,kernel_size=(3,3),padding=1)
-        self.policyFc1 = nn.Linear(argparse.size**2*128,1000)
-        self.policyFc2 = nn.Linear(1000,argparse.size**2)
-        self.valueFc1 = nn.Linear(argparse.size**2*128,100)
-        self.valueFc2 = nn.Linear(100,1)
+        self.conv = nn.Sequential(
+            nn.BatchNorm2d(self.arg.channels),
+            nn.Conv2d(self.arg.channels, 32, kernel_size=(1, 1)),
+            nn.ReLU(inplace=True)
+        )
+        self.dense = nn.Sequential(
+            _DenseBlock(num_layers=7, num_input_features=32, bn_size=4,
+                        growth_rate=12, drop_rate=self.arg.drop_rate),
+            _Transition(num_input_features=32 + 7 * 12, num_output_features=12),
+            _DenseBlock(num_layers=7, num_input_features=12, bn_size=2,
+                        growth_rate=9, drop_rate=self.arg.drop_rate)
+        )
+        size = (self.arg.size//2)**2*(12+7*9)
+        self.policyFc = nn.Linear(size,self.arg.size**2)
+        self.valueFc = nn.Linear(size, 1)
 
 
     def forward(self,x):
-        x = F.relu(self.conv1(x))
-        x = F.relu(self.conv2(x))
+        x = self.conv(x)
+        x = self.dense(x)
         x = torch.flatten(x,1)
 
-        policy = F.relu(self.policyFc1(x))
-        policy = F.softmax(self.policyFc2(policy),dim=1)
-
-        value = F.relu(self.valueFc1(x))
-        value = torch.sigmoid(self.valueFc2(value))
+        policy = F.softmax(self.policyFc(x), dim=1)
+        value = torch.tanh(self.valueFc(x))
 
         return policy, value
 
@@ -39,7 +44,7 @@ class PolicyValueFn(nn.Module):
         x = x.to(self.arg.device)
         x= torch.unsqueeze(x,dim=0)
         x = self.forward(x)
-        return torch.squeeze(x[0],dim=0).to('cpu'),torch.squeeze(x[1],dim=0).to('cpu')
+        return torch.squeeze(x[0],dim=0).to(self.arg.device),torch.squeeze(x[1],dim=0).to(self.arg.device)
 
 
 class MixLoss(nn.Module):

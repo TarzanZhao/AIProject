@@ -1,7 +1,3 @@
-import torch
-import numpy
-
-
 class Game:
     def __init__(self, agent0, agent1, simulator):
         """
@@ -32,6 +28,7 @@ class Game:
             #            print(bd.numpy().tolist())
             if action in self.simulator.getAvailableActions():
                 self.simulator.takeAction(action)
+                print(action)
             # bd = self.simulator.getCompleteBoard().numpy().tolist()
             # for i in range(self.simulator.getSize()):
             #     for j in range(self.simulator.getSize()):
@@ -39,10 +36,11 @@ class Game:
             #     print("")
 
         winner = self.simulator.getWinner()
-        self.agent0.finish(winner == 0)
-        self.agent1.finish(winner == 1)
+        self.agent0.finish(winner)
+        self.agent1.finish(winner)
         self.simulator.finish()
         return agentMap[winner]
 
     def __str__(self):
         return "Game Instance"
+

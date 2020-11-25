@@ -1,16 +1,20 @@
-from DataStorage import retrieveData,getLatestNetworkID
+from DataStorage import dataProcessor
 import torch
 import Agent
 import Board
 import Game
-import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from PolicyValueFn import PolicyValueFn
 from PolicyValueFn import MixLoss
 import os
-import copy
+import time
+
+def showTime(start_time, end_time, str):
+    elapsed_time = end_time - start_time
+    elapsed_mins = int(elapsed_time / 60)
+    elapsed_secs = int(elapsed_time - (elapsed_mins * 60))
+    print(str+"%d m %d s"%(elapsed_mins,elapsed_secs))
 
 class MyDataset(Dataset):
     def __init__(self, dataList):
@@ -65,10 +69,10 @@ class NetworkTraining:
 
     def train(self, numOfEpoch, currentModel):
         file = f"./selfplay/selfplay-{currentModel}.txt"
-        dataList = retrieveData(file)
+        dataList = dataProcessor.retrieveData(file)
         trainSet = MyDataset(dataList)
         dataloader = DataLoader(dataset=trainSet,
-                                batch_size=256,
+                                batch_size=128,
                                 num_workers=4,
                                 pin_memory=True,
                                 shuffle=True
@@ -80,14 +84,13 @@ class NetworkTraining:
             network.load_state_dict(torch.load(f'network/network-{currentModel - 1}.pt'))
 
         network.to(self.arg.device)
-        optimizer = optim.SGD(
-            network.parameters(), self.arg.lr
-        )
+        optimizer = optim.Adam(network.parameters())
         trainLossFile = "trainingloss/trainingloss-" + str(currentModel)
         if os.path.exists(trainLossFile):
             os.remove(trainLossFile)
             print("successfully deleted " + trainLossFile)
 
+        network.train()
         for epoch in range(1, numOfEpoch+1):
             total_loss = 0
             loss = 0
@@ -114,7 +117,7 @@ class NetworkTraining:
         torch.save(network.state_dict(),f"network/network-{currentModel}.pt")
 
 def Training(args):
-    currentModel = -1 if args.overwrite else getLatestNetworkID()
+    currentModel = -1 if args.overwrite else dataProcessor.getLatestNetworkID()
     trainWorker = NetworkTraining(args)
 
     for rd in range(1, args.trainround + 1):
@@ -128,11 +131,17 @@ def Training(args):
 
         for i in range(1, args.epochs + 1):
             print("epoch %d" % i)
+            start = time.time()
             g.run()
+            end = time.time()
+            showTime(start,end,"Time for play: ")
             if i % 25 == 0:
                 agent1.saveData()
         agent1.saveData()
 
         currentModel += 1
+        start = time.time()
         trainWorker.train(args.trainepochs, currentModel)
+        end = time.time()
+        showTime(start,end,"Time for training: ")
 

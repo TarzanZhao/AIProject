@@ -72,6 +72,7 @@ class Board:
                 board[action[0]][action[1]] = 1
             who ^= 1
         return board
+
     def getCompleteBoard(self):
         return self.getBoardTensor(self.actions, 0) + self.getBoardTensor(self.actions, 1)*2
 
@@ -115,8 +116,6 @@ class Board:
     def isFinish(self):
         b = self.isWin(0) or self.isWin(1)
         return 1 if not b and len(self.actions)==self.boardSize**2 else b
-
-
 
     def getWinner(self):
         """

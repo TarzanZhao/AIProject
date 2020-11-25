@@ -2,22 +2,20 @@ import sys
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-import argparse
 import PolicyValueFn
 import Board
-import Game
 import Agent
-from DataStorage import getLatestNetworkID
 import numpy as np
 import torch
+from DataStorage import dataProcessor
 
 
 class GUI(QWidget):
-    def __init__(self, agent, boardSize=15, numberForWin=5):
-        super().__init__()
-        self.C = 0  # 0: black, 1: white
+    def __init__(self, agent, boardSize=15, numberForWin=5, agentFirst = 0):
+        super(GUI, self).__init__()
         self.S = boardSize
         self.numberForWin = numberForWin
+        self.agentFirst = agentFirst
         self.W = 700
         self.B = 50
         self.d = self.W / (self.S - 1)
@@ -28,11 +26,15 @@ class GUI(QWidget):
         self.agent = agent
         self.Restart = QPushButton("Restart", self)
         self.ShowValue = QPushButton("ShowValue",self)
+        self.RandomSelfplay = QPushButton("RandomVisualize",self)
         self.Restart.clicked.connect(self.OnRestart)
         self.ShowValue.clicked.connect(self.OnShowValue)
+        self.RandomSelfplay.clicked.connect(self.OnRandomSelfplay)
         self.value = 1
         self.isShowValue = 1
+        self.isShowSelfplay = 0
         self.policy = {}
+        self.selfplayData = None
         #self.RestartVisualRun = QPushButton("RestartVisual", self)
         #self.RestartVisualRun.clicked.connect(self.OnRestartVisual)
         self.initUI()
@@ -57,18 +59,25 @@ class GUI(QWidget):
                 rec = QRect(TL[0], TL[1], int(2 * self.gap + 0.5), int(2 * self.gap + 0.5))
                 qp.setPen(Qt.black)
                 qp.drawEllipse(rec)
-                qp.drawText(int(TL[0]+self.gap/2+0.5),int(TL[1]+self.gap+0.5),"%.4f"%pro)
-                #qp.drawText(TL, "%.4f" %pro)
+                qp.setFont(QFont('SimHei', 10))
+                qp.drawText(int(TL[0]+self.gap/2+0.5),int(TL[1]+self.gap+0.5),"%.3f"%pro)
 
+        num = 1
         for action in self.Board.actions:
             TL = self.posToTopleft(action)
             qp.setPen(Qt.black)
             qp.setBrush(Qt.black if c == 1 else Qt.white)
             rec = QRect(TL[0], TL[1], int(2 * self.gap + 0.5), int(2 * self.gap + 0.5))
             qp.drawEllipse(rec)
+            qp.setPen(Qt.black if c == 0 else Qt.white)
+            qp.setFont(QFont('Arial',20))
+            if num<10:
+                qp.drawText(int(TL[0] + self.gap/1.4+0.5), int(TL[1] + self.gap*1.2 + 0.5), "%d" %num)
+            else :
+                qp.drawText(int(TL[0] + self.gap/2 + 0.5), int(TL[1] + self.gap * 1.2 + 0.5), "%d" % num)
+            num +=1
             c = 1 - c
-
-        if self.isShowValue and len(self.Board.actions)>0:
+        if self.isShowValue and not self.isShowSelfplay and len(self.Board.actions)>0:
             last = self.Board.actions[-1]
             TL = self.posToTopleft(last)
             gold = QColor(255,255,0)
@@ -76,8 +85,10 @@ class GUI(QWidget):
             qp.setBrush(Qt.black if c==0 else Qt.white)
             rec = QRect(TL[0], TL[1], int(2 * self.gap + 0.5), int(2 * self.gap + 0.5))
             qp.drawEllipse(rec)
-            if c==0:
-                qp.drawText(int(TL[0] + self.gap / 2 + 0.5), int(TL[1] + self.gap + 0.5), "%.4f" % self.policy[last])
+            if c==self.agentFirst:
+                qp.setPen(Qt.black)
+                qp.setFont(QFont('SimHei', 10))
+                qp.drawText(int(TL[0] +self.gap/2+ 0.5), int(TL[1] + self.gap + 0.5), "%.3f" % self.policy[last])
         qp.end()
 
     def mousePressEvent(self, e):
@@ -90,6 +101,8 @@ class GUI(QWidget):
             return
         else:
             self.down(pos)
+            self.update()
+            self.repaint()
             self.run()
 
     def initUI(self):
@@ -98,8 +111,11 @@ class GUI(QWidget):
         self.setWindowTitle('Chess Board')
         self.show()
         self.Restart.setGeometry(QRect(900, 200, 200, 100))
-        self.ShowValue.setGeometry(QRect(900,500,200,100))
+        self.ShowValue.setGeometry(QRect(900,400,200,100))
+        self.RandomSelfplay.setGeometry(QRect(900,600,200,100))
         #self.RestartVisualRun.setGeometry(QRect(900, 600, 200, 100))
+        if self.agentFirst:
+            self.run()
 
     def drawBackground(self, qp):
         pen = QPen(Qt.black, 2, Qt.SolidLine)
@@ -111,9 +127,7 @@ class GUI(QWidget):
 
     def down(self, pos):
         self.Board.takeAction(pos)
-        self.C = 1 - self.C
         self.update()
-        self.repaint()
         if self.Board.isFinish():
             self.win = 1
             QMessageBox.information(self, 'result', "agent 0 win!" if self.Board.getWinner() == 0 else "agent 1 win!")
@@ -125,17 +139,38 @@ class GUI(QWidget):
         self.policy = self.agent.getActionProPair()
         self.down(action)
 
-    def OnRestart(self):
+    def clear(self):
         self.Board.init()
         self.win = 0
         self.policy = {}
         self.update()
-        self.repaint()
+
+    def showPlay(self, play):
+        for action in play:
+            self.Board.takeAction(action)
+
+
+    def OnRestart(self):
+        self.isshowRandom = 0
+        self.clear()
+        if self.agentFirst:
+            self.run()
 
     def OnShowValue(self):
         self.isShowValue = 1 - self.isShowValue
         self.update()
         self.repaint()
+
+    def OnRandomSelfplay(self):
+        self.isShowSelfplay = 1
+        if self.selfplayData == None:
+            self.selfplayData = dataProcessor.getLastestSelfplay()
+        index = np.random.randint(0,len(self.selfplayData))
+        play = self.selfplayData[index]
+        self.clear()
+        self.showPlay(play)
+        self.update()
+        self.win = 1
 
     #def OnRestartVisual(self):
     #    self.Board.init()
@@ -158,11 +193,10 @@ class GUI(QWidget):
 
 def Play(args):
     model = PolicyValueFn.PolicyValueFn(args)
-    currentModel = getLatestNetworkID()
+    currentModel = dataProcessor.getLatestNetworkID()
     model.load_state_dict(torch.load(f'network/network-{currentModel}.pt',map_location=torch.device('cpu')))
-    print(currentModel)
     agent = Agent.IntelligentAgent(args.numOfIterations,model)
     app = QApplication(sys.argv)
-    gui = GUI(agent, boardSize=args.size, numberForWin=args.numberForWin)
+    gui = GUI(agent, boardSize=args.size, numberForWin=args.numberForWin, agentFirst=args.agentFirst)
     sys.exit(app.exec_())
 
