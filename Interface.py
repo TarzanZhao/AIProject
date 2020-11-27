@@ -59,8 +59,8 @@ class GUI(QWidget):
                 rec = QRect(TL[0], TL[1], int(2 * self.gap + 0.5), int(2 * self.gap + 0.5))
                 qp.setPen(Qt.black)
                 qp.drawEllipse(rec)
-                qp.setFont(QFont('SimHei', 10))
-                qp.drawText(int(TL[0]+self.gap/2+0.5),int(TL[1]+self.gap+0.5),"%.3f"%pro)
+                qp.setFont(QFont('SimHei', int(80/self.Board.getSize())))
+                qp.drawText(int(TL[0]+self.gap/2+0.5),int(TL[1]+self.gap+0.5),"%.2f"%pro)
 
         num = 1
         for action in self.Board.actions:
@@ -70,11 +70,13 @@ class GUI(QWidget):
             rec = QRect(TL[0], TL[1], int(2 * self.gap + 0.5), int(2 * self.gap + 0.5))
             qp.drawEllipse(rec)
             qp.setPen(Qt.black if c == 0 else Qt.white)
-            qp.setFont(QFont('Arial',20))
-            if num<10:
-                qp.drawText(int(TL[0] + self.gap/1.4+0.5), int(TL[1] + self.gap*1.2 + 0.5), "%d" %num)
+            qp.setFont(QFont('Arial',int(160/self.Board.getSize())))
+            if num>=100:
+                qp.drawText(int(TL[0]+self.gap/4+0.5),int(TL[1]+self.gap*1.2+0.5),"%d" %num)
+            elif num>=10 :
+                qp.drawText(int(TL[0] + self.gap/2+0.5), int(TL[1] + self.gap*1.2 + 0.5), "%d" %num)
             else :
-                qp.drawText(int(TL[0] + self.gap/2 + 0.5), int(TL[1] + self.gap * 1.2 + 0.5), "%d" % num)
+                qp.drawText(int(TL[0] + self.gap/1.4 + 0.5), int(TL[1] + self.gap * 1.2 + 0.5), "%d" % num)
             num +=1
             c = 1 - c
         if self.isShowValue and not self.isShowSelfplay and len(self.Board.actions)>0:
@@ -87,8 +89,8 @@ class GUI(QWidget):
             qp.drawEllipse(rec)
             if c==self.agentFirst:
                 qp.setPen(Qt.black)
-                qp.setFont(QFont('SimHei', 10))
-                qp.drawText(int(TL[0] +self.gap/2+ 0.5), int(TL[1] + self.gap + 0.5), "%.3f" % self.policy[last])
+                qp.setFont(QFont('SimHei', int(80/self.Board.getSize())))
+                qp.drawText(int(TL[0] +self.gap/2+ 0.5), int(TL[1] + self.gap + 0.5), "%.2f" % self.policy[last])
         qp.end()
 
     def mousePressEvent(self, e):
@@ -136,6 +138,7 @@ class GUI(QWidget):
         if self.win:
             return 0
         action = self.agent.getAction(self.Board)
+        print(action)
         self.policy = self.agent.getActionProPair()
         self.down(action)
 
@@ -190,13 +193,15 @@ class GUI(QWidget):
     #    agent1.finish(winner == 1)
     #    return agentMap[winner]
 
+def IntelligenceAgent(args):
+    model = dataProcessor.loadNetwork(args)
+    agent = Agent.IntelligentAgent(2 * args.numOfIterations, model)
+    return agent
 
-def Play(args):
-    model = PolicyValueFn.PolicyValueFn(args)
-    currentModel = dataProcessor.getLatestNetworkID()
-    model.load_state_dict(torch.load(f'network/network-{currentModel}.pt',map_location=torch.device('cpu')))
-    agent = Agent.IntelligentAgent(args.numOfIterations,model)
+def Play(args, agent):
     app = QApplication(sys.argv)
     gui = GUI(agent, boardSize=args.size, numberForWin=args.numberForWin, agentFirst=args.agentFirst)
     sys.exit(app.exec_())
+
+
 

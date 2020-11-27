@@ -1,4 +1,7 @@
 import copy
+import numpy as np
+import time
+from Training import showTime
 # class TreeEdge:
 #     def __init__(self, fatherNode, childNode, action):
 #         super(TreeEdge, self).__init__()
@@ -40,33 +43,40 @@ class TreeNode:
             totalN += self.children[action].N
 
         bestPUCT = -1e9
-        bestAction = (-1, -1)
+        bestAction = []
         for action in actions:
             newPUCT = self.children[action].PUCT(totalN=totalN)
             if newPUCT > bestPUCT:
                 bestPUCT = newPUCT
-                bestAction = action
-        return bestAction
+                bestAction = []
+                bestAction.append(action)
+            elif newPUCT == bestPUCT:
+                bestAction.append(action)
+        return bestAction[np.random.randint(len(bestAction))]
 
     def isLeaf(self):
         return len(self.children) == 0
 
-
+    def __del__(self):
+        del self.children
 
 
 
 class MCTS:
-    def __init__(self, eta=1.0):
+    def __init__(self, eta=1.0, C = 5):
         super(MCTS, self).__init__()
-        self.root = TreeNode(None, None, 0)
-        self.currentRootNode = self.root
+        self.currentRootNode = TreeNode(None, None, 0, C)
         self.eta = eta
+        self.C = C
+        self.ExpandTime = 0
+        self.NetworkTime = 0
 
     def expand(self, simulator, network):
         """
         reach and expand a leaf.
         :return:
         """
+        self.ExpandTime -=time.time()
         simulator = copy.deepcopy(simulator) #could I use copy?
         node = self.currentRootNode
         while not node.isLeaf():
@@ -79,15 +89,18 @@ class MCTS:
         else:
             actions = simulator.getAvailableActions()
             network.eval()
+            self.NetworkTime -=time.time()
             actionProbability, z = network.getPolicy_Value(simulator.getCurrentState())
+            self.NetworkTime +=time.time()
             for action in actions:
-                node.children[action] = TreeNode(node, action, actionProbability[simulator.encodeAction(action)])
+                node.children[action] = TreeNode(node, action, actionProbability[simulator.encodeAction(action)],self.C)
         while node != self.currentRootNode:
             node.N += 1
             node.W += -z  #in logic, 一个点的Q存的是他父亲走这一步的价值
             node.V = node.W/node.N
             z=-z
             node = node.fatherNode
+        self.ExpandTime+=time.time()
 
 
     def run(self, numOfIterations, simulator, network):
@@ -104,7 +117,13 @@ class MCTS:
         policy = {}
         for action in actions:
             policy[action] = (node.children[action].N**(1.0/self.eta))/totalN
+        showTime(0, self.ExpandTime, "Expanding Time: ")
+        showTime(0, self.NetworkTime, "Network Time: ")
         return policy
 
     def takeAction(self,action):
+        keys = list(self.currentRootNode.children.keys())
+        for act in keys:
+            if act != action:
+                del self.currentRootNode.children[act]
         self.currentRootNode = self.currentRootNode.children[action]

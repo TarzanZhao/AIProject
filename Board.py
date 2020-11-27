@@ -9,16 +9,22 @@ class Board:
         self.actions = [] # (player, (x,y)):
         self.boardSize = boardSize
         self.numberForWin = numberForWin
+        self.availableActions = []
+        for x in range(self.boardSize):
+            for y in range(self.boardSize):
+                self.availableActions.append((x,y))
 
     def init(self):
         self.currentPlayer = 0 # 0: first player, 1: second player.
         self.actions = [] # (player, (x,y)):
+        self.availableActions = []
+        for x in range(self.boardSize):
+            for y in range(self.boardSize):
+                self.availableActions.append((x, y))
 
-#    @classmethod
     def encodeAction(self, action):
         return self.boardSize**2 if action == (-1,-1) else action[0]*self.boardSize+action[1]
 
-#    @classmethod    
     def decodeAction(self, code):
         return (-1,-1) if code == self.boardSize**2 else (code//self.boardSize, code % self.boardSize )
     
@@ -59,6 +65,7 @@ class Board:
         """
         self.actions.append(action)
         self.currentPlayer ^= 1
+        self.availableActions.remove(action)
 
     def getBoardTensor(self, actions, player):
         """
@@ -80,14 +87,13 @@ class Board:
         """
         :return: a list of actions i.e. (x,y)
         """
-        board0 = self.getBoardTensor(self.actions, 0)
-        board1 = self.getBoardTensor(self.actions, 1)
-        availableActions = []
-        for i in range(self.boardSize):
-            for j in range(self.boardSize):
-                if board0[i][j] == 0 and board1[i][j] ==0:
-                    availableActions.append((i,j))
-        return availableActions
+        return self.availableActions
+
+    def getNumberForWin(self):
+        return self.numberForWin
+
+    def getActions(self):
+        return self.actions
 
     def isWin(self, player):
         """

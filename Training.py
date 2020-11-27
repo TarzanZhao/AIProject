@@ -122,9 +122,10 @@ def Training(args):
 
     for rd in range(1, args.trainround + 1):
         print("round:%d" % rd)
-        model = PolicyValueFn(args).to(args.device)
         if currentModel != -1:
-            model.load_state_dict(torch.load(f'network/network-{currentModel}.pt'))
+            model = dataProcessor.loadNetwork(args,currentModel)
+        else:
+            model = PolicyValueFn(args).to(device=args.device)
         agent1 = Agent.SelfplayAgent(args.numOfIterations, model, f"selfplay/selfplay-{currentModel + 1}.txt")
         b = Board.Board(args.size, args.numberForWin)
         g = Game.Game(agent0=agent1, agent1=agent1, simulator=b)
@@ -144,4 +145,35 @@ def Training(args):
         trainWorker.train(args.trainepochs, currentModel)
         end = time.time()
         showTime(start,end,"Time for training: ")
+
+# compare current and previous network
+def Evaluation(args):
+    currentModel = dataProcessor.getLatestNetworkID()
+    model1 = dataProcessor.loadNetwork(args, currentModel)
+    model2 = dataProcessor.loadNetwork(args, currentModel-1)
+    agent1 = Agent.IntelligentAgent(2*args.numOfIterations, model1)
+    agent2 = Agent.IntelligentAgent(2*args.numOfIterations,model2)
+    board = Board.Board(args.size,args.numberForWin)
+    game = Game.Game(agent1,agent2,board)
+    Score = {agent1:0,agent2:1}
+    print("First Player Case:")
+    for i in range(1,1+args.numOfEvaluations):
+        winner = game.run()
+        Score[winner] +=1
+        if winner==agent1:
+            print("The %dth game: Win!"%i)
+        else:
+            print("The %dth game: Lose!"%i)
+    game = Game.Game(agent2,agent1,board)
+    print("Second Player Case:")
+    for i in range(1,1+args.numOfEvaluations):
+        winner = game.run()
+        Score[winner] +=1
+        if winner==agent1:
+            print("The %dth game: Win!"%(i+args.numOfEvaluations))
+        else:
+            print("The %dth game: Lose!"%(i+args.numOfEvaluations))
+    return Score[agent1]/Score[agent2]
+
+
 

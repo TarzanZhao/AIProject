@@ -1,5 +1,5 @@
 import torch
-import numpy
+from PolicyValueFn import PolicyValueFn
 import json
 import os
 
@@ -58,6 +58,14 @@ class DataProcessor:
                     print(idstr)
                     currentModel = max(currentModel, int(idstr))
         return currentModel
+
+    def loadNetwork(self, args, currentModelID=None):
+        model = PolicyValueFn(args)
+        if currentModelID is None:
+            currentModelID = self.getLatestNetworkID()
+        model.load_state_dict(torch.load(f'network/network-{currentModelID}.pt', map_location=torch.device(args.device)))
+        model.to(args.device)
+        return model
 
     def getLastestSelfplay(self):
         path = './selfplay'

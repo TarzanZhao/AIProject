@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 from DataStorage import dataProcessor
+import GeneralSearch
 import MCTS
 
 
@@ -15,6 +16,12 @@ class Agent:
     def finish(self, isWin):
         """
         :param isWin: is the Agent win
+        """
+        pass
+
+    def getActionProPair(self):
+        """
+        :return: stochastic policy
         """
         pass
 
@@ -89,7 +96,7 @@ class IntelligentAgent(Agent):
         self.act_pro_pair = {}
 
     def getAction(self, simulator):
-        mcts = MCTS.MCTS()
+        mcts = MCTS.MCTS(C=5)
         mcts.run(self.numOfiterations,simulator,self.network)
         self.act_pro_pair = mcts.getPolicy()
         p = 0
@@ -105,3 +112,17 @@ class IntelligentAgent(Agent):
 
     def __str__(self):
         return "IntelligentAgent Instance"
+
+class SearchAgent(Agent):
+    def __init__(self, depth=6):
+        self.depth = depth
+        self.tree = GeneralSearch.AlphaBetaSearch(self.depth)
+
+    def getAction(self, simulator):
+        return self.tree.getAction(simulator)
+
+    def getActionProPair(self):
+        return self.tree.getPolicy()
+
+    def __str__(self):
+        return "SearchAgent Instance"

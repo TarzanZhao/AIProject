@@ -36,6 +36,7 @@ class Game:
             #     print("")
 
         winner = self.simulator.getWinner()
+        print("Num of play: %d" %len(self.simulator.actions))
         self.agent0.finish(winner)
         self.agent1.finish(winner)
         self.simulator.finish()
