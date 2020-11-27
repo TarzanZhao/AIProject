@@ -1,3 +1,4 @@
+from Timer import timer
 class Game:
     def __init__(self, agent0, agent1, simulator):
         """

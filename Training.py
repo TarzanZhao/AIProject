@@ -7,14 +7,8 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from PolicyValueFn import PolicyValueFn
 from PolicyValueFn import MixLoss
+from Timer import timer
 import os
-import time
-
-def showTime(start_time, end_time, str):
-    elapsed_time = end_time - start_time
-    elapsed_mins = int(elapsed_time / 60)
-    elapsed_secs = int(elapsed_time - (elapsed_mins * 60))
-    print(str+"%d m %d s"%(elapsed_mins,elapsed_secs))
 
 class MyDataset(Dataset):
     def __init__(self, dataList):
@@ -132,19 +126,17 @@ def Training(args):
 
         for i in range(1, args.epochs + 1):
             print("epoch %d" % i)
-            start = time.time()
+            TimeID = timer.startTime("a single play")
             g.run()
-            end = time.time()
-            showTime(start,end,"Time for play: ")
+            timer.endTime(TimeID)
             if i % 25 == 0:
                 agent1.saveData()
         agent1.saveData()
 
         currentModel += 1
-        start = time.time()
+        TimeID = timer.startTime("network training")
         trainWorker.train(args.trainepochs, currentModel)
-        end = time.time()
-        showTime(start,end,"Time for training: ")
+        timer.endTime(TimeID)
 
 # compare current and previous network
 def Evaluation(args):

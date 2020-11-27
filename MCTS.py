@@ -1,7 +1,6 @@
 import copy
 import numpy as np
-import time
-from Training import showTime
+from Timer import timer
 # class TreeEdge:
 #     def __init__(self, fatherNode, childNode, action):
 #         super(TreeEdge, self).__init__()
@@ -68,40 +67,42 @@ class MCTS:
         self.currentRootNode = TreeNode(None, None, 0, C)
         self.eta = eta
         self.C = C
-        self.ExpandTime = 0
-        self.NetworkTime = 0
 
     def expand(self, simulator, network):
         """
         reach and expand a leaf.
         :return:
         """
-        self.ExpandTime -=time.time()
+        Selection = timer.startTime("MCTS selection")
         simulator = copy.deepcopy(simulator) #could I use copy?
         node = self.currentRootNode
         while not node.isLeaf():
+            Child = timer.startTime("MCTS best child")
             action = node.bestActionByPUCT()
+            timer.endTime(Child)
             node = node.children[action]
             simulator.takeAction(action)
-
+        timer.endTime(Selection)
         if simulator.isFinish():
             z = 1.0 if simulator.getWinner() == simulator.getCurrentPlayer() else -1.0
         else:
             actions = simulator.getAvailableActions()
+            networkCall = timer.startTime("calling network")
             network.eval()
-            self.NetworkTime -=time.time()
             actionProbability, z = network.getPolicy_Value(simulator.getCurrentState())
-            self.NetworkTime +=time.time()
+            timer.endTime(networkCall)
+            Adding = timer.startTime("MCTS adding nodes")
             for action in actions:
                 node.children[action] = TreeNode(node, action, actionProbability[simulator.encodeAction(action)],self.C)
+            timer.endTime(Adding)
+        BackPro = timer.startTime("MCTS backpropagation")
         while node != self.currentRootNode:
             node.N += 1
             node.W += -z  #in logic, 一个点的Q存的是他父亲走这一步的价值
             node.V = node.W/node.N
             z=-z
             node = node.fatherNode
-        self.ExpandTime+=time.time()
-
+        timer.endTime(BackPro)
 
     def run(self, numOfIterations, simulator, network):
         for i in range(numOfIterations):
@@ -109,6 +110,7 @@ class MCTS:
             self.expand(simulator, network)
 
     def getPolicy(self):
+        TimeID = timer.startTime("MCTS get policy")
         node = self.currentRootNode
         actions = node.allActions()
         totalN = 0
@@ -117,8 +119,7 @@ class MCTS:
         policy = {}
         for action in actions:
             policy[action] = (node.children[action].N**(1.0/self.eta))/totalN
-        showTime(0, self.ExpandTime, "Expanding Time: ")
-        showTime(0, self.NetworkTime, "Network Time: ")
+        timer.endTime(TimeID)
         return policy
 
     def takeAction(self,action):

@@ -3,7 +3,7 @@ import numpy as np
 from DataStorage import dataProcessor
 import GeneralSearch
 import MCTS
-
+from Timer import timer
 
 class Agent:
     def getAction(self, simulator):
@@ -46,6 +46,7 @@ class SelfplayAgent(Agent):
         self.isFinished = 0
 
     def getAction(self, simulator):
+        TimeID = timer.startTime("get action from selfPlayAgent")
         self.mcts.run(self.numOfiterations, simulator, self.network)
         act_pro_pair = self.mcts.getPolicy()
         keys = []
@@ -55,11 +56,11 @@ class SelfplayAgent(Agent):
             values.append(value)
         action = keys[np.random.choice(len(values), 1, p=values)[0]]
         self.mcts.takeAction(action)
-
         policy = np.zeros(simulator.getSize() ** 2)
         for act in act_pro_pair.keys():
             policy[simulator.encodeAction(act)] = act_pro_pair[act]
         self.datalist.append((action, torch.tensor(policy), simulator.getCurrentPlayer()))
+        timer.endTime(TimeID)
         return action
 
     def finish(self, winner):

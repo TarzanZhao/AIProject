@@ -5,7 +5,7 @@ import Interface
 import torch.nn
 import Training
 import Experiment
-import Agent
+from Timer import timer
 from DataStorage import dataProcessor
 
 
@@ -13,9 +13,9 @@ def main(train):
     # ALl Hyper Parameters
     parser = argparse.ArgumentParser()
     parser.add_argument('--channels', type=int, default=4)
-    parser.add_argument('--size', type=int, default=8)
-    parser.add_argument('--numOfIterations', type=int, default=50)
-    parser.add_argument('--numberForWin', type=int, default=4)
+    parser.add_argument('--size', type=int, default=15)
+    parser.add_argument('--numOfIterations', type=int, default=40)
+    parser.add_argument('--numberForWin', type=int, default=5)
     parser.add_argument('--device', type=str, default='cpu')
     parser.add_argument('--epochs', type=int, default=50)
     parser.add_argument('--drop_rate',type=float,default=0.3)

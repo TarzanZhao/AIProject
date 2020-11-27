@@ -7,6 +7,7 @@ import Board
 import Agent
 import numpy as np
 import torch
+from Timer import timer
 from DataStorage import dataProcessor
 
 
@@ -131,6 +132,8 @@ class GUI(QWidget):
         self.Board.takeAction(pos)
         self.update()
         if self.Board.isFinish():
+            timer.showTimeInfo("Time ingredient in a single getAction")
+            timer.clear()
             self.win = 1
             QMessageBox.information(self, 'result', "agent 0 win!" if self.Board.getWinner() == 0 else "agent 1 win!")
 
