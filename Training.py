@@ -129,14 +129,15 @@ def Training(args):
             TimeID = timer.startTime("a single play")
             g.run()
             timer.endTime(TimeID)
+            timer.showTime(TimeID)
             if i % 25 == 0:
                 agent1.saveData()
         agent1.saveData()
-
         currentModel += 1
         TimeID = timer.startTime("network training")
         trainWorker.train(args.trainepochs, currentModel)
         timer.endTime(TimeID)
+        timer.showTime(TimeID)
 
 # compare current and previous network
 def Evaluation(args):

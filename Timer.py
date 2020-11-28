@@ -46,13 +46,19 @@ class Timer:
         # set color
         colors = cm.rainbow(np.arange(len(data)) / len(data))  # colormaps: Paired, autumn, rainbow, gray,spring,Darks
         patches, texts, autotexts = ax1.pie(data, labels=None, autopct=showPCT,
-                                           shadow=False, startangle=170, colors=colors,)
+                                           shadow=False, colors=colors,)
         ax1.axis('equal')
         ax1.set_title(title)
         ax2.axis('off')
         ax2.legend(patches, labels, loc='center left')
         plt.tight_layout()
         plt.show()
+        plt.close()
+
+        plt.figure()
+        plt.bar(labels,data)
+        plt.show()
+        plt.close()
 
 
 timer = Timer()

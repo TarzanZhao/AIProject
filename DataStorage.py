@@ -12,7 +12,7 @@ class DataProcessor:
 
     def saveData(self, dataList, file):
         """
-        :param dataList: [(action, 8*8+1 1-d tensor, 1 1-d tensor),"end",...] "end": end of a game
+        :param dataList: [(action, 8*8 1-d tensor, 1 1-d tensor),"end",...] "end": end of a game
         :param file: file to store the data.
         :return:
         """
@@ -21,7 +21,7 @@ class DataProcessor:
             if data == 'end':
                 dataForSave.append('end')
             else:
-                dataForSave.append((data[0], data[1].numpy().tolist(), data[2].numpy().tolist()))
+                dataForSave.append((data[0], data[1], data[2]))
         with open(file, "w") as F:
             F.write(json.dumps(dataForSave))
 
@@ -41,7 +41,8 @@ class DataProcessor:
             if data == 'end':
                 self.simulator.init()
             else:
-                dataList.append(tuple([self.simulator.getCurrentState(), torch.tensor(data[1]), torch.tensor(data[2], dtype=torch.float)]))
+                dataList.append(tuple([torch.tensor(self.simulator.getCurrentState(),dtype=torch.float),
+                                       torch.tensor(data[1]), torch.tensor(data[2], dtype=torch.float)]))
                 self.simulator.takeAction(tuple(data[0]))
         return dataList
 

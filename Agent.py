@@ -56,10 +56,10 @@ class SelfplayAgent(Agent):
             values.append(value)
         action = keys[np.random.choice(len(values), 1, p=values)[0]]
         self.mcts.takeAction(action)
-        policy = np.zeros(simulator.getSize() ** 2)
+        policy = [0 for i in range(simulator.getSize()**2)]
         for act in act_pro_pair.keys():
             policy[simulator.encodeAction(act)] = act_pro_pair[act]
-        self.datalist.append((action, torch.tensor(policy), simulator.getCurrentPlayer()))
+        self.datalist.append((action, policy, simulator.getCurrentPlayer()))
         timer.endTime(TimeID)
         return action
 
@@ -68,7 +68,7 @@ class SelfplayAgent(Agent):
             self.isFinished = 1
             for i in self.datalist:
                 z = 1.0 if i[2]==winner else -1.0
-                self.finalDataList.append((i[0], i[1], torch.tensor(z)))
+                self.finalDataList.append((i[0], i[1], z))
             self.finalDataList.append('end')
 
     def saveData(self):
