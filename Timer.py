@@ -36,8 +36,8 @@ class Timer:
     def showTimeInfo(self, title):
         labels = list(self.timeTable.keys())
         data = [self.timeTable[t] for t in labels]
-        print(labels)
-        print(data)
+        # print(labels)
+        # print(data)
 
         # initial figure
         fig, axes = plt.subplots(figsize=(10,5) ,ncols=2)

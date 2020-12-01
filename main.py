@@ -34,7 +34,7 @@ def main(train):
         args.device = 'cpu'
         timer.clear()
         #Interface.Play(args,Interface.IntelxligenceAgent(args))
-        Interface.Play(args, Agent.SearchAgent(4))
+        Interface.Play(args, Agent.SearchAgent(3))
     else:
         exp = Experiment.Experiment(args)
         exp.selfplayWithDifferentNumOfIterations()
