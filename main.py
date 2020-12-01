@@ -7,7 +7,7 @@ import Training
 import Experiment
 from Timer import timer
 from DataStorage import dataProcessor
-
+import Agent
 
 def main(train):
     # ALl Hyper Parameters
@@ -33,8 +33,8 @@ def main(train):
     elif train==0:
         args.device = 'cpu'
         timer.clear()
-        Interface.Play(args,Interface.IntelligenceAgent(args))
-        #Interface.Play(args,Agent.SearchAgent(1))
+        #Interface.Play(args,Interface.IntelxligenceAgent(args))
+        Interface.Play(args, Agent.SearchAgent(4))
     else:
         exp = Experiment.Experiment(args)
         exp.selfplayWithDifferentNumOfIterations()

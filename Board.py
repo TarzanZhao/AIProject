@@ -2,20 +2,16 @@ import torch
 import copy
 import numpy as np
 from Timer import timer
-
+import argparse
 
 class Board:
-    def __init__(self, boardSize, numberForWin):
+    def __init__(self, boardSize, numberForWin, mode="normal", maxScoreForStep = 10.0):#"min-max-search"
         super(Board, self).__init__()
-        self.currentPlayer = 0  # 0: first player, 1: second player.
-        self.actions = []  # (player, (x,y)):
         self.boardSize = boardSize
         self.numberForWin = numberForWin
-        self.availableActions = []
-        for x in range(self.boardSize):
-            for y in range(self.boardSize):
-                self.availableActions.append((x, y))
-        self.boardList = [[[0 for k in range(boardSize)] for j in range(boardSize)] for i in range(2)]
+        self.mode = mode
+        self.maxScoreForStep = maxScoreForStep
+        self.init()
 
     def init(self):
         self.currentPlayer = 0  # 0: first player, 1: second player.
@@ -25,6 +21,9 @@ class Board:
             for y in range(self.boardSize):
                 self.availableActions.append((x, y))
         self.boardList = [[[0 for k in range(self.boardSize)] for j in range(self.boardSize)] for i in range(2)]
+        self.playerScore = [0, 0]
+        self.feature = [[0 for i in range(self.numberForWin+1)] for j in range(2)]
+        #record occurrance of max length for each (action, direction) pair.
 
     def encodeAction(self, action):
         return self.boardSize ** 2 if action == (-1, -1) else action[0] * self.boardSize + action[1]
@@ -48,37 +47,100 @@ class Board:
         """
         :return: a 4*boardSize*boardSize tensor that represents a state for neural network to use. Assume the next(current) player is first.
         """
-        #boardList = []
-        #actions = copy.copy(self.actions)
-        #length = len(actions)
-        #for i in range(2):
-            #boardList.append(self.getBoardTensor(actions, self.currentPlayer))
-            #boardList.append(self.getBoardTensor(actions, self.currentPlayer ^ 1))
-            #if length > 0:
-            #    actions.pop()
-            #    length -= 1
-            #if length > 0:
-            #    actions.pop()
-            #    length -= 1
-        #return torch.stack(boardList, 0)
+        boardList = []
+        actions = copy.copy(self.actions)
+        length = len(actions)
+        rollbackactions = []
+        for i in range(2):
+            boardList.append(self.getBoardList(self.currentPlayer))
+            boardList.append(self.getBoardList(self.currentPlayer ^ 1))
+            if length > 0:
+                rollbackactions.append(actions.pop())
+                self.rollbackLastAction()
+                length -= 1
+            if length > 0:
+                rollbackactions.append(actions.pop())
+                self.rollbackLastAction()
+                length -= 1
+
+        for action in rollbackactions.reverse():
+            self.takeAction(action)
         return self.boardList
 
+    def outOfRange(self, x, y):
+        return x < 0 or y < 0 or x >= self.boardSize or y >= self.boardSize
+
+    def updateFeatureAndScore(self, currentPlayer, action, mode):
+        dx = [-1, -1, -1, 0]
+        dy = [-1, 0, 1, -1]
+        x, y = action[0], action[1]
+        lengths = []
+        board = self.boardList[currentPlayer]
+        timer.startTime("part 2:get length")
+        importance = 0
+        for i in range(4):
+            l, r = 0, 0
+            xx, yy = x-dx[i], y-dy[i]
+            while l+1+1<=self.numberForWin and not self.outOfRange(xx, yy) and board[xx][yy]:
+                l += 1
+                xx -= dx[i]
+                yy -= dy[i]
+
+            xx, yy = x+dx[i], y+dy[i]
+            while r+l+1+1<=self.numberForWin and not self.outOfRange(xx, yy) and board[xx][yy]:
+                r += 1
+                xx += dx[i]
+                yy += dy[i]
+            lengths.append(l + r + 1)
+            importance += self.lenToScore(l+r+1)
+        timer.endTime("part 2:get length")
+
+        # timer.startTime("test")
+        # tmp = 1
+        # for i in range(4):
+        #     for j in range(self.numberForWin):
+        #         for k in range(self.numberForWin):
+        #         tmp += i*j
+        # timer.endTime("test")
+        if mode == 0:
+            return importance
+
+        timer.startTime("part 2:update")
+        for length in lengths:
+            self.feature[currentPlayer][length] += 1*mode
+            if length == self.numberForWin:
+                if self.feature[currentPlayer][length] == 0 or self.feature[currentPlayer][length] == 1:
+                    self.playerScore[currentPlayer] += self.lenToScore(length) * mode
+            else:
+                self.playerScore[currentPlayer] += self.lenToScore(length) * mode
+        timer.endTime("part 2:update")
+        return importance
+
+    def lenToScore(self, length):
+        if length == 1:
+            return 0
+        return self.maxScoreForStep / (20.0**(self.numberForWin-length))
+
+    def approxScore(self):
+        return self.playerScore[self.currentPlayer] - self.playerScore[self.currentPlayer^1]
+
     def takeAction(self, action):
-        """
-        :param action: (int, int)
-        :return:
-        """
+#        print(action)
+        self.updateFeatureAndScore(self.currentPlayer, action, mode = 1)
+
         self.actions.append(action)
+        self.availableActions.remove(action)
         self.boardList[self.currentPlayer][action[0]][action[1]]=1
         self.currentPlayer ^= 1
-        self.availableActions.remove(action)
 
     def rollbackLastAction(self):
-        act = self.actions[-1]
-        self.actions.pop()
-        self.availableActions.append(act)
-        self.currentPlayer ^=1
-        self.boardList[self.currentPlayer][act[0]][act[1]]=0
+        self.currentPlayer ^= 1
+        action = self.actions.pop()
+#        print("back ", action)
+        self.availableActions.append(action)
+        self.boardList[self.currentPlayer][action[0]][action[1]]=0
+
+        self.updateFeatureAndScore(self.currentPlayer, action, mode = -1)
 
     def getBoardList(self, player):
         """
@@ -103,31 +165,7 @@ class Board:
         return self.actions
 
     def isWin(self, player):
-        """
-        :return: Boolean
-        """
-        Win = timer.startTime("isWin")
-        board = self.getBoardList(player)
-        dx = [-1, -1, -1, 0]
-        dy = [-1, 0, 1, -1]
-
-        def outOfRange(x, y):
-            return x < 0 or y < 0 or x >= self.boardSize or y >= self.boardSize
-
-        for x in range(self.boardSize):
-            for y in range(self.boardSize):
-                if board[x][y] == 1:
-                    for i in range(4):
-                        test = True
-                        for j in range(self.numberForWin):
-                            if outOfRange(x + dx[i] * j, y + dy[i] * j) or board[x + dx[i] * j][y + dy[i] * j] == 0:
-                                test = False
-                                break
-                        if test:
-                            return True
-
-        timer.endTime(Win)
-        return False
+        return self.feature[player][self.numberForWin] > 0
 
     def isFinish(self):
         b = self.isWin(0) or self.isWin(1)

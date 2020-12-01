@@ -2,7 +2,7 @@ import numpy as np
 import copy
 import time
 from Timer import timer
-
+from random import random
 
 class AlphaBetaSearch:
     def __init__(self, depth):
@@ -13,63 +13,65 @@ class AlphaBetaSearch:
 
     def reducedAvailableActions(self, simulator):
         # only search close actions
+        timer.startTime("part 1")
         n = simulator.getNumberForWin() // 2
-        flag = {}
+        flag = [[0 for i in range(simulator.boardSize)] for j in range(simulator.boardSize)]
         for action in simulator.getActions():
             for x in range(-n, n + 1, 1):
                 for y in range(-n, n + 1, 1):
-                    flag[(action[0] - x, action[1] - y)] = 1
+                    if not simulator.outOfRange(action[0] - x, action[1] - y):
+                        flag[action[0] - x][action[1] - y] = 1
         reducedAct = []
         for act in simulator.getAvailableActions():
-            if act in flag:
+            if flag[act[0]][act[1]]:
                 reducedAct.append(act)
         if len(reducedAct) == 0:  # no stone on board
             reducedAct.append((simulator.getSize() // 2, simulator.getSize() // 2))
-        np.random.shuffle(reducedAct)
-        return reducedAct
+        timer.endTime("part 1")
+
+        #timer.startTime("part 2")
+        action_importance_pairs = []
+        for action in reducedAct:
+#            timer.startTime("part 2:calculate importance")
+            importance = simulator.updateFeatureAndScore(simulator.getCurrentPlayer(), action, 0) + \
+                         simulator.updateFeatureAndScore(simulator.getLastPlayer(), action, 0)
+#            timer.endTime("part 2:calculate importance")
+            action_importance_pairs.append((importance, action))
+        timer.startTime("part 3")
+        action_importance_pairs.sort(reverse=True)
+        length = len(action_importance_pairs)
+        random_pos = [0,3,10]
+        for pos in random_pos:
+            if length>pos+1 and random()<0.5:
+                action_importance_pairs[pos], action_importance_pairs[pos+1] = action_importance_pairs[pos+1], action_importance_pairs[pos]
+        timer.endTime("part 3")
+        #timer.endTime("part 2")
+        return map(lambda pair: pair[1], action_importance_pairs)
 
     def maxValue(self, alpha, beta, currentDepth, simulator):
         self.iter +=1
         if currentDepth == self.depth:
-            return self.scoreFn(simulator)
+            return simulator.approxScore()
         value = -1e9
-        for act in self.reducedAvailableActions(simulator):
-            new_simulator = copy.deepcopy(simulator)
-            new_simulator.takeAction(act)
-            if new_simulator.isFinish():
-                return 100
-            value = max(value, -self.maxValue(-beta, -alpha, currentDepth + 1, new_simulator))
+#        timer.startTime("fetch actions")
+        availableActions = self.reducedAvailableActions(simulator)
+#        timer.endTime("fetch actions")
+        for act in availableActions:
+            timer.startTime("take action")
+            simulator.takeAction(act)
+            timer.endTime("take action")
+            if simulator.isFinish():
+                value = -simulator.approxScore()
+                simulator.rollbackLastAction()
+                break
+            value = max(value, -self.maxValue(-beta, -alpha, currentDepth + 1, simulator))
+            timer.startTime("rollback")
+            simulator.rollbackLastAction()
+            timer.endTime("rollback")
             if value >= beta:
-                return value
+                break
             alpha = max(alpha, value)
         return value
-
-    # def expectedValue(self,currentDepth):
-    def oneSideScore(self, simulator, player):
-        board = simulator.getBoardTensor(simulator.getActions(), player)
-        dx = [-1, -1, -1, 0]
-        dy = [-1, 0, 1, -1]
-
-        def outOfRange(x, y):
-            return x < 0 or y < 0 or x >= simulator.getSize() or y >= simulator.getSize()
-
-        feature = {simulator.getNumberForWin() - 2: 0, simulator.getNumberForWin() - 1: 0,
-                   simulator.getNumberForWin(): 0}
-        for x in range(simulator.getSize()):
-            for y in range(simulator.getSize()):
-                if board[x][y] == 1:
-                    for i in range(4):
-                        for j in range(1, simulator.getNumberForWin() + 1):
-                            if outOfRange(x + dx[i] * j, y + dy[i] * j) or board[x + dx[i] * j][
-                                y + dy[i] * j] == 0:
-                                if j in feature:
-                                    feature[j] += 1
-                                break
-        score = 1 if feature[simulator.getNumberForWin()] > 0 else 0
-        score += 0.3 if feature[simulator.getNumberForWin() - 1] > 0 else 0
-        score += 0.2 if feature[simulator.getNumberForWin() - 2] > 1 else 0
-        score += 0.05 if feature[simulator.getNumberForWin() - 2] > 0 else 0
-        return score
 
     def scoreFn(self, simulator):
         return self.oneSideScore(simulator, simulator.getCurrentPlayer()) \
@@ -82,10 +84,15 @@ class AlphaBetaSearch:
         self.totalValue = 0
         for act in simulator.getAvailableActions():
             self.policy[act] = 0
+        new_simulator = copy.deepcopy(simulator)
+        new_simulator.mode = "min-max-search"
         for act in self.reducedAvailableActions(simulator):
-            new_simulator = copy.deepcopy(simulator)
             new_simulator.takeAction(act)
-            value = -self.maxValue(-1e9, -best, 0, new_simulator)
+            if new_simulator.isFinish():
+                value = -new_simulator.approxScore()
+            else:
+                value = -self.maxValue(-1e9, -best, 0, new_simulator)
+            new_simulator.rollbackLastAction()
             self.totalValue += np.exp(value)
             self.policy[act] = np.exp(value)
             if value > best:
