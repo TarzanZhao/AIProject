@@ -16,6 +16,7 @@ class DataProcessor:
         :param file: file to store the data.
         :return:
         """
+        print("Try saving data into "+file+".")
         dataForSave = []
         for data in dataList:
             if data == 'end':
@@ -24,6 +25,7 @@ class DataProcessor:
                 dataForSave.append((data[0], data[1], data[2]))
         with open(file, "w") as F:
             F.write(json.dumps(dataForSave))
+        print("Successfully save data into "+file+".")
 
     def retrieveData(self, file):
         """

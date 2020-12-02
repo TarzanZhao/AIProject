@@ -1,4 +1,5 @@
 from Timer import timer
+import torch
 class Game:
     def __init__(self, agent0, agent1, simulator):
         """
@@ -15,6 +16,9 @@ class Game:
         self.agent1.init()
         self.simulator.init()
 
+    def switchAgents(self):
+        self.agent0, self.agent1 = self.agent1, self.agent0
+
     def run(self):
         """
         :return: winner of the game
@@ -25,6 +29,7 @@ class Game:
         while not self.simulator.isFinish():
             agent = agentMap[self.simulator.getCurrentPlayer()]
             action = agent.getAction(self.simulator)
+#            print(f"player {self.simulator.getLastPlayer()} take action {action}")
             # print("---player %d's round, take action (%d,%d) "% (self.simulator.currentPlayer, action[0], action[1]))
             #            print(bd.numpy().tolist())
             if action in self.simulator.getAvailableActions():
@@ -36,7 +41,11 @@ class Game:
             #     print("")
 
         winner = self.simulator.getWinner()
+        board = torch.Tensor(self.simulator.getBoardList(0)) + torch.Tensor(self.simulator.getBoardList(1))*2
+        print(board.long())
+#        print(+self.simulator.getBoardList(1)*2)
         print("Num of play: %d" %len(self.simulator.actions))
+#        print(self.simulator.actions)
         self.agent0.finish(winner)
         self.agent1.finish(winner)
         self.simulator.finish()

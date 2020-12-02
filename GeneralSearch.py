@@ -3,6 +3,7 @@ import copy
 import time
 from Timer import timer
 from random import random
+from random import randint
 
 class AlphaBetaSearch:
     def __init__(self, depth):
@@ -11,15 +12,22 @@ class AlphaBetaSearch:
         self.totalValue = 0
         self.iter = 0
 
-    def reducedAvailableActions(self, simulator):
+    def reducedAvailableActions(self, simulator, returnPolicy=False):
         # only search close actions
 #        timer.startTime("part 1")
         n = simulator.getNumberForWin() // 2
         flag = [[0 for i in range(simulator.boardSize)] for j in range(simulator.boardSize)]
         dis = [[0 for i in range(simulator.boardSize)] for j in range(simulator.boardSize)]
         actions = simulator.getActions()
+        m = simulator.boardSize
         if not actions:
-            return [(simulator.getSize() // 2, simulator.getSize() // 2)]
+            action = (m//2 + randint(-n, n), m//2 + randint(-n, n))
+#            print(action)
+            if not returnPolicy:
+                return [action]
+            else:
+                p = 1.0 / ( (n + 1 + n)**2 )
+                return {(i,j):p for i in range(-n, n+1) for j in range(-n, n+1)}
 
         player = -1
 
@@ -74,14 +82,21 @@ class AlphaBetaSearch:
             if j == len(Q) or flag[Q[j][0]][Q[j][1]]!=1:
                 action_importance_pairs.sort(reverse=True)
                 length = len(action_importance_pairs)
-                random_pos = [0, 3, 10]
+#                random_pos = [k for k in range(length-1)]
+                random_pos = [0,3,6,9]
                 for pos in random_pos:
                     if length > pos + 1 and random() < 0.5:
                         action_importance_pairs[pos], action_importance_pairs[pos + 1] = \
                             action_importance_pairs[pos + 1], action_importance_pairs[pos]
-                final_sorted_actions = list(map(lambda x:x[1], action_importance_pairs))
-                final_sorted_actions.extend(Q[j:])
-                return final_sorted_actions
+                if not returnPolicy:
+                    final_sorted_actions = list(map(lambda x: x[1], action_importance_pairs))
+                    final_sorted_actions.extend(Q[j:])
+                    #print(final_sorted_actions)
+                    return final_sorted_actions
+                else:
+                    total_importance = sum( map(lambda x:np.exp(x[0]), action_importance_pairs))
+                    return {action: np.exp(importance)/total_importance for importance, action in action_importance_pairs}
+
 
             x, y = Q[j]
             importance = 0
@@ -155,11 +170,16 @@ class AlphaBetaSearch:
             if value > best:
                 best = value
                 bestAction = act
+#        print(bestAction)
         return bestAction
 
     def getPolicy(self):
-        print("Search Iter: %d" %self.iter)
-        self.iter = 0
+        # print("Search Iter: %d" %self.iter)
+        # self.iter = 0
+        if self.totalValue == -1:
+            return self.policy
+
         for key in self.policy.keys():
             self.policy[key] /= self.totalValue
+        self.totalValue = -1
         return self.policy

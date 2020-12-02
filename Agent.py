@@ -4,6 +4,7 @@ from DataStorage import dataProcessor
 import GeneralSearch
 import MCTS
 from Timer import timer
+from random import random
 
 class Agent:
     def getAction(self, simulator):
@@ -115,15 +116,53 @@ class IntelligentAgent(Agent):
         return "IntelligentAgent Instance"
 
 class SearchAgent(Agent):
-    def __init__(self, depth=6):
+    def __init__(self, depth=6, epsilon = 0.3):
         self.depth = depth
         self.tree = GeneralSearch.AlphaBetaSearch(self.depth)
+        self.epsilon = epsilon
+        self.dataList = []
+
+    def init(self):
+        self.dataList = []
 
     def getAction(self, simulator):
-        return self.tree.getAction(simulator)
+        bestAction = self.tree.getAction(simulator)
+        act_pro_pair = self.tree.getPolicy()
+        keys = []
+        values = []
+        for key, value in act_pro_pair.items():
+            keys.append(key)
+            values.append(value)
+#        print(values)
+        action = keys[np.random.choice(len(values), p=values)]
+        if random() < self.epsilon: #(1.0-2*self.depth/10.0)
+            finalAction = action
+        else:
+            finalAction = bestAction
+
+        policy = [0 for i in range(simulator.getSize() ** 2)]
+        for act, prob in zip(keys, values):
+            policy[simulator.encodeAction(act)] = prob
+        self.dataList.append((finalAction, policy))
+        return finalAction
 
     def getActionProPair(self):
         return self.tree.getPolicy()
 
     def __str__(self):
         return "SearchAgent Instance"
+
+class GreedyAgent(SearchAgent):
+    def __init__(self):
+        super().__init__(depth=0)
+        print(self.depth)
+
+    def __dir__(self):
+        return "GreedyAgent Instance"
+
+    # def getAction(self, simulator):
+    #     return self.tree.getAction(simulator)
+    #     #self.policy = self.tree.reducedAvailableActions(simulator, returnPolicy = False)
+    #
+    # def getActionProPair(self):
+    #     return self.policy
