@@ -61,12 +61,13 @@ class NetworkTraining:
         self.arg = arg
         pass
 
-    def train(self, numOfEpoch, currentModel):
-        file = f"./selfplay/selfplay-{currentModel}.txt"
-        dataList = dataProcessor.retrieveData(file)
+    def train(self, numOfEpoch, currentModel, dataList = None):
+        if dataList is None:
+            file = f"./selfplay/selfplay-{currentModel}.txt"
+            dataList = dataProcessor.retrieveData(file)
         trainSet = MyDataset(dataList)
         dataloader = DataLoader(dataset=trainSet,
-                                batch_size=128,
+                                batch_size=self.arg.batchsize,
                                 num_workers=4,
                                 pin_memory=True,
                                 shuffle=True
@@ -100,14 +101,14 @@ class NetworkTraining:
                 cnt += 1
                 if cnt % 100 == 0:
                     with open(trainLossFile, mode="a") as file:
-                        file.write("i={} loss={:.6f}".format(i, loss.item()))
+                        file.write("i={} loss={:.6f}\n".format(i, loss.item()))
             total_loss = total_loss / cnt
             print("epoch={} average_loss={:.6f}".format(epoch, total_loss))
             with open(trainLossFile, mode="a") as file:
-                file.write("epoch={} average_loss={:.6f}".format(epoch, loss))
+                file.write("epoch={} average_loss={:.6f}\n".format(epoch, loss))
 
             if epoch % 10 == 0:
-                torch.save(network.state_dict(), f"network/network-{currentModel}.pt")
+                torch.save(network.state_dict(), f"network/network-{currentModel} .pt")
         torch.save(network.state_dict(),f"network/network-{currentModel}.pt")
 
 def Training(args):

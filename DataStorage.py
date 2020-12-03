@@ -38,14 +38,17 @@ class DataProcessor:
         dataString = F.readline().strip("\n")
         F.close()
         rawData = json.loads(dataString)
+        nPlay = 0
         for data in rawData:
             # (action, policy, value)
             if data == 'end':
+                nPlay += 1
                 self.simulator.init()
             else:
                 dataList.append(tuple([torch.tensor(self.simulator.getCurrentState(),dtype=torch.float),
                                        torch.tensor(data[1]), torch.tensor(data[2], dtype=torch.float)]))
                 self.simulator.takeAction(tuple(data[0]))
+        print(f"load {nPlay} plays' data")
         return dataList
 
     def getLatestNetworkID(self):

@@ -63,7 +63,8 @@ class Board:
                 self.rollbackLastAction()
                 length -= 1
 
-        for action in rollbackactions.reverse():
+        for idx in range(len(rollbackactions)-1, -1, -1):
+            action = rollbackactions[idx]
             self.takeAction(action)
         return self.boardList
 

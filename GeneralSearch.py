@@ -170,6 +170,9 @@ class AlphaBetaSearch:
             if value > best:
                 best = value
                 bestAction = act
+        if self.totalValue == 0:
+            print(bestAction)
+            raise AssertionError
 #        print(bestAction)
         return bestAction
 

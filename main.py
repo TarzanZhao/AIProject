@@ -11,6 +11,7 @@ from DataStorage import dataProcessor
 import Agent
 import random
 import numpy as np
+from Training import NetworkTraining
 
 def main(train):
     # ALl Hyper Parameters
@@ -27,6 +28,7 @@ def main(train):
     parser.add_argument('--numOfEvaluations',type=int,default=5)
     parser.add_argument('--overwrite',type=int,default=1) # overwrite previous network
     parser.add_argument('--agentFirst',type=int,default=1) # agent or human play first
+    parser.add_argument('--batchsize', type=int,default=256)
     args = parser.parse_args()
     args.device = ('cuda' if torch.cuda.is_available() else 'cpu')
     dataProcessor.initSimulator(Board.Board(args.size, args.numberForWin))
@@ -41,9 +43,9 @@ def main(train):
     elif train == 2:
         exp = Experiment.Experiment(args)
         exp.selfplayWithDifferentNumOfIterations()
-    else:
-        lastk = 0
-        numConfig = lastk + 20
+    elif train == 3:
+        lastk = 4
+        numConfig = lastk + 47
         for k in range(lastk, numConfig):
             epsilon0 = round(random.uniform(0.2, 0.6), 2)
             epsilon1 = round(random.uniform(0.2, 0.6), 2)
@@ -65,35 +67,46 @@ def main(train):
 
             agent0Win = 0
             finalDataList = []
-            totalGames = 500
+            totalGames = 200
             for ite in range(totalGames):
-                t = game.run() == searchAgent0
-                data0 = searchAgent0.dataList
-                data1 = searchAgent1.dataList
-                z = 1 if t else -1
-                j = 0
-                for i in range(len(data0)):
-                    d0 = data0[i]
-                    finalDataList.append((d0[0], d0[1], z))
-                    if j < len(data1):
-                        d1 = data1[j]
-                        finalDataList.append((d1[0], d1[1], -z))
-                        j += 1
-                finalDataList.append("end")
-                print(f"iteration {ite + 1}: search agent-{int(not t)} win the game")
-                if (ite+1) % 50 == 0:
-                    dataProcessor.saveData(finalDataList, savePath)
-
-                agent0Win += t
-
+                try:
+                    t = game.run() == searchAgent0
+                    data0 = searchAgent0.dataList
+                    data1 = searchAgent1.dataList
+                    z = 1 if t else -1
+                    j = 0
+                    for i in range(len(data0)):
+                        d0 = data0[i]
+                        finalDataList.append((d0[0], d0[1], z))
+                        if j < len(data1):
+                            d1 = data1[j]
+                            finalDataList.append((d1[0], d1[1], -z))
+                            j += 1
+                    finalDataList.append("end")
+                    print(f"iteration {ite + 1}: search agent-{int(not t)} win the game")
+                    if (ite+1) % 50 == 0:
+                        dataProcessor.saveData(finalDataList, savePath)
+                    agent0Win += t
+                except:
+                    with open("./logs/log.txt", "a") as file:
+                        file.write(f"error occurs in iteration {k}\n")
             dataProcessor.saveData(finalDataList, savePath)
             print(f"search agent0 win {agent0Win} games out of {totalGames}")
             with open("./logs/log.txt", "a") as file:
-                file.write(f"search agent0 win {agent0Win} games out of {totalGames}")
+                file.write(f"search agent0 win {agent0Win} games out of {totalGames}\n")
+    elif train==4:
+        totalDataList = []
+        for k in range(51):
+            file = f"./searchPlayData/searchPlay-{k}"
+            dataList = dataProcessor.retrieveData(file)
+            totalDataList.extend(dataList)
+        currentModel = 0
+        trainWorker = NetworkTraining(args)
+        trainWorker.train(args.trainepochs, currentModel, totalDataList)
 
 
 
 
 if __name__ == '__main__':
-    # 2 experiment; 1 to train; 0 to visualize the game; 3: sample data from search agent and gready agent.
-    main(3)
+    # 2 experiment; 1 to train; 0 to visualize the game; 3: sample data from search agent and gready agent. 4:train model using selfplay data.
+    main(4)
