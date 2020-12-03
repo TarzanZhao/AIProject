@@ -16,7 +16,7 @@ from Training import NetworkTraining
 def main(train):
     # ALl Hyper Parameters
     parser = argparse.ArgumentParser()
-    parser.add_argument('--channels', type=int, default=2)
+    parser.add_argument('--channels', type=int, default=4)
     parser.add_argument('--size', type=int, default=8)
     parser.add_argument('--numOfIterations', type=int, default=80)
     parser.add_argument('--numberForWin', type=int, default=4)

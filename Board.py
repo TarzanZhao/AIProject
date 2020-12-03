@@ -66,7 +66,7 @@ class Board:
         for idx in range(len(rollbackactions)-1, -1, -1):
             action = rollbackactions[idx]
             self.takeAction(action)
-        return self.boardList
+        return boardList
 
     def outOfRange(self, x, y):
         return x < 0 or y < 0 or x >= self.boardSize or y >= self.boardSize

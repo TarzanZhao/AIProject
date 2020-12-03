@@ -108,7 +108,7 @@ class NetworkTraining:
                 file.write("epoch={} average_loss={:.6f}\n".format(epoch, loss))
 
             if epoch % 10 == 0:
-                torch.save(network.state_dict(), f"network/network-{currentModel} .pt")
+                torch.save(network.state_dict(), f"network/network-{currentModel}.pt")
         torch.save(network.state_dict(),f"network/network-{currentModel}.pt")
 
 def Training(args):
