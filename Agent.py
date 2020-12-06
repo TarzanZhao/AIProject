@@ -47,7 +47,7 @@ class SelfplayAgent(Agent):
         self.isFinished = 0
 
     def getAction(self, simulator):
-        TimeID = timer.startTime("get action from selfPlayAgent")
+        TimeID = timer.startTime("Get action")
         self.mcts.run(self.numOfiterations, simulator, self.network)
         act_pro_pair = self.mcts.getPolicy()
         keys = []
@@ -98,6 +98,7 @@ class IntelligentAgent(Agent):
         self.act_pro_pair = {}
 
     def getAction(self, simulator):
+        TimeID = timer.startTime("Get Action")
         mcts = MCTS.MCTS(C=5)
         mcts.run(self.numOfiterations,simulator,self.network)
         self.act_pro_pair = mcts.getPolicy()
@@ -107,6 +108,7 @@ class IntelligentAgent(Agent):
             if pro>p:
                 p = pro
                 action = act
+        timer.endTime(TimeID)
         return action
 
     def getActionProPair(self):
@@ -114,6 +116,32 @@ class IntelligentAgent(Agent):
 
     def __str__(self):
         return "IntelligentAgent Instance"
+
+class NetWorkAgent(Agent):
+    def __init__(self, network):
+        self.net = network
+        self.actProPair = {}
+
+    def getAction(self, simulator):
+        TimeId = timer.startTime("GetAction")
+        self.policy,_ = self.net.getPolicy_Value(torch.tensor(simulator.getCurrentState(), dtype=torch.float))
+        self.policy = self.policy.tolist()
+        bestAction = (-1, -1)
+        bestProb = -1e9
+        self.actProPair = {}
+        for act in simulator.getAvailableActions():
+            prob = self.policy[simulator.encodeAction(act)]
+            self.actProPair[act] = prob
+            if prob > bestProb:
+                bestAction = act
+                bestProb = prob
+            elif prob == bestProb and np.random.random() > 0.5:
+                bestAction = act
+        timer.endTime(TimeId)
+        return bestAction
+
+    def getActionProPair(self):
+        return self.actProPair
 
 class SearchAgent(Agent):
     def __init__(self, depth=6, epsilon = 0.3):

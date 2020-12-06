@@ -145,10 +145,6 @@ class AlphaBetaSearch:
             alpha = max(alpha, value)
         return value
 
-    def scoreFn(self, simulator):
-        return self.oneSideScore(simulator, simulator.getCurrentPlayer()) \
-               - self.oneSideScore(simulator, simulator.getLastPlayer())
-
     def getAction(self, simulator):
         best = -1e9
         bestAction = (-1, -1)

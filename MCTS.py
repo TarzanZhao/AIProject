@@ -74,10 +74,12 @@ class MCTS:
         """
         simulator = copy.deepcopy(simulator) #could I use copy?
         node = self.currentRootNode
+        timer.startTime("Selection")
         while not node.isLeaf():
             action = node.bestActionByPUCT()
             node = node.children[action]
             simulator.takeAction(action)
+        timer.endTime("Selection")
         if simulator.isFinish():
             z = 1.0 if simulator.getWinner() == simulator.getCurrentPlayer() else -1.0
         else:

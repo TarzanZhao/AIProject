@@ -34,6 +34,7 @@ class Game:
             #            print(bd.numpy().tolist())
             if action in self.simulator.getAvailableActions():
                 self.simulator.takeAction(action)
+            print(action)
             # bd = self.simulator.getCompleteBoard().numpy().tolist()
             # for i in range(self.simulator.getSize()):
             #     for j in range(self.simulator.getSize()):
@@ -41,8 +42,6 @@ class Game:
             #     print("")
 
         winner = self.simulator.getWinner()
-        board = torch.Tensor(self.simulator.getBoardList(0)) + torch.Tensor(self.simulator.getBoardList(1))*2
-        print(board.long())
 #        print(+self.simulator.getBoardList(1)*2)
         print("Num of play: %d" %len(self.simulator.actions))
 #        print(self.simulator.actions)

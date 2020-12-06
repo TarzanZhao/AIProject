@@ -132,7 +132,6 @@ class GUI(QWidget):
         self.Board.takeAction(pos)
         self.update()
         if self.Board.isFinish():
-            timer.clear()
             self.win = 1
             QMessageBox.information(self, 'result', "agent 0 win!" if self.Board.getWinner() == 0 else "agent 1 win!")
 
@@ -140,7 +139,7 @@ class GUI(QWidget):
         if self.win:
             return 0
         action = self.agent.getAction(self.Board)
-        timer.showTimeInfo("Time ingredient in a single getAction")
+        timer.showTimeInfo("Time Information")
         self.policy = self.agent.getActionProPair()
         self.down(action)
 
@@ -197,13 +196,17 @@ class GUI(QWidget):
 
 def IntelligenceAgent(args, modelID=None):
     model = dataProcessor.loadNetwork(args, modelID)
-    agent = Agent.IntelligentAgent(2 * args.numOfIterations, model)
+    agent = Agent.IntelligentAgent(args.numOfIterations, model)
+    return agent
+
+def NetworkAgent(args):
+    model = dataProcessor.loadNetwork(args)
+    agent = Agent.NetWorkAgent(model)
     return agent
 
 def Play(args, agent):
     app = QApplication(sys.argv)
     gui = GUI(agent, boardSize=args.size, numberForWin=args.numberForWin, agentFirst=args.agentFirst)
     sys.exit(app.exec_())
-
 
 

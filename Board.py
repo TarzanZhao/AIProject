@@ -63,6 +63,7 @@ class Board:
                 self.rollbackLastAction()
                 length -= 1
 
+        #>> takeAction? return boardList?
         for idx in range(len(rollbackactions)-1, -1, -1):
             action = rollbackactions[idx]
             self.takeAction(action)

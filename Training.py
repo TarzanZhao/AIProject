@@ -127,7 +127,7 @@ def Training(args):
 
         for i in range(1, args.epochs + 1):
             print("epoch %d" % i)
-            TimeID = timer.startTime("a single play")
+            TimeID = timer.startTime("play time")
             g.run()
             timer.endTime(TimeID)
             timer.showTime(TimeID)

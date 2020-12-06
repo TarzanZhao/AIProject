@@ -18,16 +18,16 @@ def main(train):
     parser = argparse.ArgumentParser()
     parser.add_argument('--channels', type=int, default=4)
     parser.add_argument('--size', type=int, default=8)
-    parser.add_argument('--numOfIterations', type=int, default=120)
+    parser.add_argument('--numOfIterations', type=int, default=150)
     parser.add_argument('--numberForWin', type=int, default=4)
     parser.add_argument('--device', type=str, default='cpu')
-    parser.add_argument('--epochs', type=int, default=50)
+    parser.add_argument('--epochs', type=int, default=30)
     parser.add_argument('--drop_rate',type=float,default=0.3)
-    parser.add_argument('--trainround', type=int, default=2)
-    parser.add_argument('--trainepochs', type=int, default=500)
-    parser.add_argument('--numOfEvaluations',type=int,default=5)
-    parser.add_argument('--overwrite',type=int,default=1) # overwrite previous network
-    parser.add_argument('--agentFirst',type=int,default=0) # agent or human play first
+    parser.add_argument('--trainround', type=int, default=20)
+    parser.add_argument('--trainepochs', type=int, default=100)
+    parser.add_argument('--numOfEvaluations',type=int,default=1)
+    parser.add_argument('--overwrite',type=int,default=0) # overwrite previous network
+    parser.add_argument('--agentFirst',type=int,default=1) # agent or human play first
     parser.add_argument('--batchsize', type=int,default=256)
     args = parser.parse_args()
     args.device = ('cuda' if torch.cuda.is_available() else 'cpu')
@@ -38,11 +38,16 @@ def main(train):
     elif train==0:
         args.device = 'cpu'
         timer.clear()
-        Interface.Play(args,Interface.IntelligenceAgent(args, 1))
-#        Interface.Play(args, Agent.SearchAgent(3))
+        #Interface.Play(args,Interface.NetworkAgent(args))
+        Interface.Play(args,Interface.IntelligenceAgent(args))
+        #Interface.Play(args, Agent.SearchAgent(3,epsilon=0))
     elif train == 2:
         exp = Experiment.Experiment(args)
-        exp.selfplayWithDifferentNumOfIterations(1)
+        #agent = Interface.IntelligenceAgent(args)
+        #agent2 = Agent.SearchAgent(4)
+        #print("The win rate for Network: %.3f" %exp.evaluation(agent,agent2))
+        X,Y = exp.playWithBaselineInDifferentNumOfIterations()
+        exp.simplePlot(X,Y,title="Wining Strategy with Different Tree Iteration")
     elif train == 3:
         lastk = 4
         numConfig = lastk + 47
