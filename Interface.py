@@ -195,8 +195,8 @@ class GUI(QWidget):
     #    agent1.finish(winner == 1)
     #    return agentMap[winner]
 
-def IntelligenceAgent(args):
-    model = dataProcessor.loadNetwork(args)
+def IntelligenceAgent(args, modelID=None):
+    model = dataProcessor.loadNetwork(args, modelID)
     agent = Agent.IntelligentAgent(2 * args.numOfIterations, model)
     return agent
 

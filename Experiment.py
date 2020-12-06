@@ -16,8 +16,8 @@ class Experiment():
                 win += 1
         return win / self.args.numOfEvaluations
 
-    def selfplayWithDifferentNumOfIterations(self):
-        model = dataProcessor.loadNetwork(self.args)
+    def selfplayWithDifferentNumOfIterations(self, modelID=None):
+        model = dataProcessor.loadNetwork(self.args, modelID)
         winRate = []
         for iter in range(5, 50, 5):
             agent = Agent.IntelligentAgent(iter, model)
