@@ -12,13 +12,14 @@ import Agent
 import random
 import numpy as np
 from Training import NetworkTraining
+from LogRecorder import LogRecorder
 
 def main(train):
     # ALl Hyper Parameters
     parser = argparse.ArgumentParser()
     parser.add_argument('--channels', type=int, default=4)
     parser.add_argument('--size', type=int, default=8)
-    parser.add_argument('--numOfIterations', type=int, default=150)
+    parser.add_argument('--numOfIterations', type=int, default=50)
     parser.add_argument('--numberForWin', type=int, default=4)
     parser.add_argument('--device', type=str, default='cpu')
     parser.add_argument('--epochs', type=int, default=30)
@@ -39,31 +40,29 @@ def main(train):
         args.device = 'cpu'
         timer.clear()
         #Interface.Play(args,Interface.NetworkAgent(args))
-        Interface.Play(args,Interface.IntelligenceAgent(args))
+        Interface.Play(args,Interface.IntelligenceAgent(args, 1))
         #Interface.Play(args, Agent.SearchAgent(3,epsilon=0))
     elif train == 2:
         exp = Experiment.Experiment(args)
         #agent = Interface.IntelligenceAgent(args)
         #agent2 = Agent.SearchAgent(4)
         #print("The win rate for Network: %.3f" %exp.evaluation(agent,agent2))
-        X,Y = exp.playWithBaselineInDifferentNumOfIterations()
+        X,Y = exp.playWithBaselineInDifferentNumOfIterations(start= 20, end=500,stride=40)
         exp.simplePlot(X,Y,title="Wining Strategy with Different Tree Iteration")
     elif train == 3:
-        lastk = 4
-        numConfig = lastk + 47
+        lastk = 0
+        numConfig = lastk + 20
+        directory = "./searchPlayData/stable"
+        logPath = directory + "log.txt"
+        logger = LogRecorder(logPath)
         for k in range(lastk, numConfig):
             epsilon0 = round(random.uniform(0.2, 0.6), 2)
             epsilon1 = round(random.uniform(0.2, 0.6), 2)
             depth0 = np.random.choice(4, p=[0.05, 0.15, 0.2, 0.6])
             depth1 = np.random.choice(4, p=[0.05, 0.15, 0.2, 0.6])
+            savePath = directory+f"/searchPlay-{k}"
 
-            savePath = f"./searchPlayData/searchPlay-{k}"
-            with open("./searchPlayData/configForEach", "a") as file:
-                file.write(f"k={k} depth0={depth0} depth1={depth1} epsilon0={epsilon0} epsilon1={epsilon1}\n")
-            print(f"\n\nk={k} depth0={depth0} depth1={depth1} epsilon0={epsilon0} epsilon1={epsilon1}\n----------------------START----------------------\n")
-
-            with open("./logs/log.txt", "a") as file:
-                file.write(f"k={k} depth0={depth0} depth1={depth1} epsilon0={epsilon0} epsilon1={epsilon1}\n")
+            logger.write(f"k={k} depth0={depth0} depth1={depth1} epsilon0={epsilon0} epsilon1={epsilon1}", addition_std="\n----------------------START----------------------")
 
             searchAgent0 = Agent.SearchAgent(depth0, epsilon=epsilon0)
             searchAgent1 = Agent.SearchAgent(depth1, epsilon=epsilon1)
@@ -93,12 +92,9 @@ def main(train):
                         dataProcessor.saveData(finalDataList, savePath)
                     agent0Win += t
                 except:
-                    with open("./logs/log.txt", "a") as file:
-                        file.write(f"error occurs in iteration {k}\n")
+                    logger.write(f"error occurs in iteration {k}")
             dataProcessor.saveData(finalDataList, savePath)
-            print(f"search agent0 win {agent0Win} games out of {totalGames}")
-            with open("./logs/log.txt", "a") as file:
-                file.write(f"search agent0 win {agent0Win} games out of {totalGames}\n")
+            logger.write(f"search agent0 win {agent0Win} games out of {totalGames}")
     elif train==4:
         totalDataList = []
         for k in range(51):
