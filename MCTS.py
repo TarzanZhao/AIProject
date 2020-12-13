@@ -1,5 +1,6 @@
 import copy
 import numpy as np
+import math
 from Timer import timer
 import torch
 # class TreeEdge:
@@ -68,7 +69,7 @@ class MCTS:
         self.eta = eta
         self.C = C
 
-    def expand(self, simulator, network):
+    def expand(self, simulator, expandingFn, rolloutFn=None, balance = 1):
         """
         reach and expand a leaf.
         :return:
@@ -82,13 +83,20 @@ class MCTS:
         if simulator.isFinish():
             z = 1.0 if simulator.getWinner() == simulator.getCurrentPlayer() else -1.0
         else:
+            Id = timer.startTime('Expanding')
             actions = simulator.getAvailableActions()
-            network.eval()
-            with torch.no_grad():
-                actionProbability, z = network.getPolicy_Value(torch.tensor(simulator.getCurrentState(),dtype=torch.float))
-            z = z.item()
+            actionProbability, z = expandingFn.getPolicy_Value(simulator.getCurrentState())
+            timer.endTime(Id)
+            e = 0
+            Id = timer.startTime('Rollout')
+            if balance>0:
+                e = (1.0 if simulator.approxScore()>0 else -1.0) if (rolloutFn is None) else rolloutFn(simulator)
+            timer.endTime(Id)
+            z = balance*e+ (1-balance)*z
             for action in actions:
-                node.children[action] = TreeNode(node, action, actionProbability[simulator.encodeAction(action)].item(),self.C)
+                Id = timer.startTime('Child')
+                node.children[action] = TreeNode(node, action, actionProbability[simulator.encodeAction(action)],self.C)
+                timer.endTime(Id)
         while node != self.currentRootNode:
             node.N += 1
             node.W += -z  #in logic, 一个点的Q存的是他父亲走这一步的价值
@@ -96,10 +104,10 @@ class MCTS:
             z=-z
             node = node.fatherNode
 
-    def run(self, numOfIterations, simulator, network):
+    def run(self, numOfIterations, simulator, network, rolloutFn=None, balance = 1):
         for i in range(numOfIterations):
             #print("------iter %d"%i)
-            self.expand(simulator, network)
+            self.expand(simulator, network, rolloutFn, balance)
 
     def getPolicy(self):
         node = self.currentRootNode

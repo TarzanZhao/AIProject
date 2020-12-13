@@ -15,6 +15,10 @@ class Game:
         self.agent0.init()
         self.agent1.init()
         self.simulator.init()
+        #if str(self.agent0)=="SearchAgent Instance" or str(self.agent1)== "SearchAgent Instance":
+        #    self.simulator.setFeatureUpdate(True)
+        #else:
+        #    self.simulator.setFeatureUpdate(False)
 
     def switchAgents(self):
         self.agent0, self.agent1 = self.agent1, self.agent0
@@ -42,7 +46,7 @@ class Game:
             #     print("")
 
         winner = self.simulator.getWinner()
-#        print(+self.simulator.getBoardList(1)*2)
+        print(torch.tensor(self.simulator.getBoardList(0))+torch.tensor(self.simulator.getBoardList(1))*2)
         print("Num of play: %d" %len(self.simulator.actions))
 #        print(self.simulator.actions)
         self.agent0.finish(winner)

@@ -39,7 +39,7 @@ class Experiment():
                     print("The %dth game: Win!" % (i + self.args.numOfEvaluations))
                 else:
                     print("The %dth game: Lose!" % (i + self.args.numOfEvaluations))
-        return Score[agent1]/self.args.numOfEvaluations
+        return Score[agent1]/(2*self.args.numOfEvaluations-self.args.numOfEvaluations*agentFirstOnly)
 
     def simplePlot(self,X,Y,title,xlabel="x",ylabel='y',color='blue',linestyle='-.'):
         plt.plot(X,Y,color = color,linestyle=linestyle)

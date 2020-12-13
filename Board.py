@@ -5,11 +5,12 @@ from Timer import timer
 import argparse
 
 class Board:
-    def __init__(self, boardSize, numberForWin, mode="normal", maxScoreForStep = 10.0):#"min-max-search"
+    def __init__(self, boardSize, numberForWin, mode="normal", maxScoreForStep = 10.0, featureUpdate=True):#"min-max-search"
         super(Board, self).__init__()
         self.boardSize = boardSize
         self.numberForWin = numberForWin
         self.mode = mode
+        self.featureUpdate = featureUpdate
         self.maxScoreForStep = maxScoreForStep
         self.init()
 
@@ -128,7 +129,8 @@ class Board:
 
     def takeAction(self, action):
 #        print(action)
-        self.updateFeatureAndScore(self.currentPlayer, action, mode = 1)
+        if self.featureUpdate:
+            self.updateFeatureAndScore(self.currentPlayer, action, mode = 1)
 
         self.actions.append(action)
         self.availableActions.remove(action)
@@ -142,7 +144,8 @@ class Board:
         self.availableActions.append(action)
         self.boardList[self.currentPlayer][action[0]][action[1]]=0
 
-        self.updateFeatureAndScore(self.currentPlayer, action, mode = -1)
+        if self.featureUpdate:
+            self.updateFeatureAndScore(self.currentPlayer, action, mode = -1)
 
     def getBoardList(self, player):
         """
@@ -184,6 +187,9 @@ class Board:
             return 1
         elif len(self.actions) == self.boardSize ** 2:
             return np.random.randint(0, 2)
+
+    def setFeatureUpdate(self, v):
+        self.featureUpdate = v
 
     def finish(self):
         """

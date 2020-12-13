@@ -2,8 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.models.densenet import _DenseBlock, _Transition
-
 import torch.utils.data
+import copy
+import random
 
 
 class PolicyValueFn(nn.Module):
@@ -53,3 +54,19 @@ class MixLoss(nn.Module):
         valueLoss = F.mse_loss(labelValue, predValue.view_as(labelValue), reduction="mean")
         policyLoss = ((torch.log(predPolicy) * labelPolicy).sum(dim=1)).mean(dim=0)
         return valueLoss - policyLoss
+
+class ExpandingFn():
+    def __init__(self, network = None):
+        self.network = network
+
+    def getPolicy_Value(self, x):
+        if self.network is None:
+            size = len(x[0])**2
+            actionProbability = [1/size for i in range(size)]
+            return actionProbability, 0
+        else:
+            self.network.eval()
+            with torch.no_grad():
+                actionProbability, z = self.network.getPolicy_Value(torch.tensor(x,dtype=torch.float))
+            return actionProbability.tolist(), z.item()
+

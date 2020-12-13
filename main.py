@@ -12,22 +12,23 @@ import Agent
 import random
 import numpy as np
 from Training import NetworkTraining
-from LogRecorder import LogRecorder
+from RolloutFn import minMaxRolloutFn,randomRolloutFn
+#from LogRecorder import LogRecorder
 
 def main(train):
     # ALl Hyper Parameters
     parser = argparse.ArgumentParser()
     parser.add_argument('--channels', type=int, default=4)
-    parser.add_argument('--size', type=int, default=8)
+    parser.add_argument('--size', type=int, default=10)
     parser.add_argument('--numOfIterations', type=int, default=150)
-    parser.add_argument('--numberForWin', type=int, default=4)
+    parser.add_argument('--numberForWin', type=int, default=5)
     parser.add_argument('--device', type=str, default='cpu')
-    parser.add_argument('--epochs', type=int, default=25)
+    parser.add_argument('--epochs', type=int, default=3)
     parser.add_argument('--drop_rate', type=float, default=0.3)
-    parser.add_argument('--trainround', type=int, default=50)
-    parser.add_argument('--trainepochs', type=int, default=50)
-    parser.add_argument('--numOfEvaluations', type=int, default=1)
-    parser.add_argument('--overwrite', type=int, default=0)  # overwrite previous network
+    parser.add_argument('--trainround', type=int, default=3)
+    parser.add_argument('--trainepochs', type=int, default=20)
+    parser.add_argument('--numOfEvaluations', type=int, default=5)
+    parser.add_argument('--overwrite', type=int, default=1)  # overwrite previous network
     parser.add_argument('--agentFirst', type=int, default=1)  # agent or human play first
     parser.add_argument('--batchsize', type=int, default=256)
     parser.add_argument('--miniTrainingEpochs',type=int,default=10)
@@ -57,15 +58,20 @@ def main(train):
         args.device = 'cpu'
         timer.clear()
         #Interface.Play(args,Interface.NetworkAgent(args))
-        Interface.Play(args,Interface.IntelligenceAgent(args))
-        #Interface.Play(args, Agent.SearchAgent(3,epsilon=0))
+        #Interface.Play(args,Interface.IntelligenceAgent(args))
+        import PolicyValueFn
+        #model = PolicyValueFn.PolicyValueFn(args).to(args.device)
+        #Interface.Play(args,agent = Agent.IntelligentAgent(400,network=None,rolloutFn=min))
+        Interface.Play(args, Agent.SearchAgent(0,epsilon=0))
     elif train == 2:
         exp = Experiment.Experiment(args)
-        #agent = Interface.IntelligenceAgent(args)
-        #agent2 = Agent.SearchAgent(4)
+        agent = Agent.SearchAgent(depth=3,epsilon=0)
+        agent2 = Agent.IntelligentAgent(300,network=None,rolloutFn=minMaxRolloutFn)
+        winRate = exp.evaluation(agent,agent2,agentFirstOnly=False)
+        print(winRate)
         #print("The win rate for Network: %.3f" %exp.evaluation(agent,agent2))
-        X,Y = exp.playWithBaselineInDifferentNumOfIterations()
-        exp.simplePlot(X,Y,title="Wining Strategy with Different Tree Iteration")
+        #exp.playWithBaselineInDifferentNumOfIterations()
+        #exp.simplePlot(X,Y,title="Wining Rate")
     elif train == 3:
         lastk = 0
         numConfig = lastk + 20
@@ -127,4 +133,4 @@ def main(train):
 
 if __name__ == '__main__':
     # 2 experiment; 1 to train; 0 to visualize the game; 3: sample data from search agent and gready agent. 4:train model using selfplay data.
-    main(0)
+    main(2)

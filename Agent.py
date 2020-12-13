@@ -5,6 +5,8 @@ import GeneralSearch
 import MCTS
 from Timer import timer
 from random import random
+from PolicyValueFn import ExpandingFn
+from RolloutFn import randomRolloutFn, minMaxRolloutFn
 
 class Agent:
     def getAction(self, simulator):
@@ -31,11 +33,13 @@ class Agent:
 
 
 class SelfplayAgent(Agent):
-    def __init__(self, numOfiterations, network, path, eta = 1.0):
+    def __init__(self, numOfiterations, network, path, eta = 1.0, decay = 0.85, balance = 1):
         self.datalist = []
         self.numOfiterations = numOfiterations
-        self.network = network
+        self.network = ExpandingFn(network)
         self.eta = eta
+        self.decay = decay
+        self.balance = balance
         self.mcts = MCTS.MCTS(eta= self.eta)
         self.path = path
         self.finalDataList = []
@@ -44,12 +48,12 @@ class SelfplayAgent(Agent):
 
     def init(self):
         self.datalist = []
-        self.mcts = MCTS.MCTS()
+        self.mcts = MCTS.MCTS(eta= self.eta)
         self.isFinished = 0
 
     def getAction(self, simulator):
         TimeID = timer.startTime("Get action")
-        self.mcts.run(self.numOfiterations, simulator, self.network)
+        self.mcts.run(self.numOfiterations, simulator, self.network, rolloutFn=randomRolloutFn, balance=self.balance)
         act_pro_pair = self.mcts.getPolicy()
         keys = []
         values = []
@@ -66,10 +70,12 @@ class SelfplayAgent(Agent):
         return action
 
     def finish(self, winner):
+        gamma = self.decay*(len(self.datalist)-1)
         if not self.isFinished:
             self.isFinished = 1
             for i in self.datalist:
-                z = 1.0 if i[2]==winner else -1.0
+                z = gamma *1.0 if i[2]==winner else gamma*(-1.0)
+                gamma /= self.decay
                 self.finalDataList.append((i[0], i[1], z))
             self.finalDataList.append('end')
 
@@ -93,15 +99,15 @@ class RandomAgent(Agent):
 
 
 class IntelligentAgent(Agent):
-    def __init__(self, numOfiterations, network):
+    def __init__(self, numOfiterations, network, rolloutFn = randomRolloutFn):
         self.numOfiterations = numOfiterations
-        self.network = network
+        self.network = ExpandingFn(network)
         self.act_pro_pair = {}
+        self.randomRolloutFn = rolloutFn
 
     def getAction(self, simulator):
-        TimeID = timer.startTime("Get Action")
         mcts = MCTS.MCTS(C=5)
-        mcts.run(self.numOfiterations,simulator,self.network)
+        mcts.run(self.numOfiterations,simulator,self.network, rolloutFn=self.randomRolloutFn, balance=1)
         self.act_pro_pair = mcts.getPolicy()
         p = 0
         action = (-1,-1)
@@ -109,7 +115,8 @@ class IntelligentAgent(Agent):
             if pro>p:
                 p = pro
                 action = act
-        timer.endTime(TimeID)
+            elif pro==p and np.random.random()>0.5:
+                action = act
         return action
 
     def getActionProPair(self):
@@ -195,3 +202,4 @@ class GreedyAgent(SearchAgent):
     #
     # def getActionProPair(self):
     #     return self.policy
+

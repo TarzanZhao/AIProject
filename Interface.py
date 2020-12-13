@@ -25,6 +25,10 @@ class GUI(QWidget):
         self.Board.init()
         self.win = 0
         self.agent = agent
+        #if str(self.agent)=="SearchAgent Instance":
+        #    self.Board.setFeatureUpdate(True)
+        #else:
+        #    self.Board.setFeatureUpdate(False)
         self.Restart = QPushButton("Restart", self)
         self.ShowValue = QPushButton("ShowValue",self)
         self.RandomSelfplay = QPushButton("RandomVisualize",self)
@@ -142,9 +146,11 @@ class GUI(QWidget):
     def run(self):
         if self.win:
             return 0
+        #print(f"In the view of {self.Board.getCurrentPlayer()}: {self.Board.approxScore()}")
         action = self.agent.getAction(self.Board)
         self.policy = self.agent.getActionProPair()
         self.down(action)
+        #print(f"In the view of {self.Board.getCurrentPlayer()}: {self.Board.approxScore()}")
 
     def clear(self):
         self.Board.init()

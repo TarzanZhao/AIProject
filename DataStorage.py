@@ -105,4 +105,36 @@ class DataProcessor:
             dataList.pop()
         return dataList
 
+    def getLastestSearchPlay(self):
+        path = './searchPlayData'
+        files = os.listdir(path)
+        latestSearchPlay = -1
+        for file in files:
+            if not os.path.isdir(file):
+                filestr = file.split("/")[-1]
+                print(filestr)
+                if filestr.startswith("searchPlay-"):
+                    idstr = filestr[11:]
+                    print(idstr)
+                    latestSearchPlay = max(latestSearchPlay, int(idstr))
+        if latestSearchPlay == -1:
+            return []
+        else:
+            file = f"searchPlayData/searchPlay-{latestSearchPlay}"
+            dataList = []
+            dataList.append([])
+            num = 0
+            F = open(file, "r")
+            dataString = F.readline().strip("\n")
+            F.close()
+            rawData = json.loads(dataString)
+            for data in rawData:
+                if data == 'end':
+                    num += 1
+                    dataList.append([])
+                else:
+                    dataList[num].append(tuple(data[0]))
+            dataList.pop()
+        return dataList
+
 dataProcessor = DataProcessor()
