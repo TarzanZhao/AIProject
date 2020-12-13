@@ -34,6 +34,7 @@ class TreeNode:
         return self.children.values()
 
     def PUCT(self, totalN):
+        #print("here：%.3f" %(self.C *self.P *(totalN**0.5)/(self.N+1)))
         return self.V + self.C *self.P *(totalN**0.5)/(self.N+1)
 
     def bestActionByPUCT(self):
@@ -74,18 +75,17 @@ class MCTS:
         """
         simulator = copy.deepcopy(simulator) #could I use copy?
         node = self.currentRootNode
-        timer.startTime("Selection")
         while not node.isLeaf():
             action = node.bestActionByPUCT()
             node = node.children[action]
             simulator.takeAction(action)
-        timer.endTime("Selection")
         if simulator.isFinish():
             z = 1.0 if simulator.getWinner() == simulator.getCurrentPlayer() else -1.0
         else:
             actions = simulator.getAvailableActions()
             network.eval()
-            actionProbability, z = network.getPolicy_Value(torch.tensor(simulator.getCurrentState(),dtype=torch.float))
+            with torch.no_grad():
+                actionProbability, z = network.getPolicy_Value(torch.tensor(simulator.getCurrentState(),dtype=torch.float))
             z = z.item()
             for action in actions:
                 node.children[action] = TreeNode(node, action, actionProbability[simulator.encodeAction(action)].item(),self.C)

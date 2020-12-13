@@ -13,44 +13,69 @@ import random
 import numpy as np
 from Training import NetworkTraining
 
+
 def main(train):
     # ALl Hyper Parameters
     parser = argparse.ArgumentParser()
     parser.add_argument('--channels', type=int, default=4)
-    parser.add_argument('--size', type=int, default=8)
-    parser.add_argument('--numOfIterations', type=int, default=150)
-    parser.add_argument('--numberForWin', type=int, default=4)
+    parser.add_argument('--size', type=int, default=10)
+    parser.add_argument('--numOfIterations', type=int, default=400)
+    parser.add_argument('--numberForWin', type=int, default=5)
     parser.add_argument('--device', type=str, default='cpu')
-    parser.add_argument('--epochs', type=int, default=30)
-    parser.add_argument('--drop_rate',type=float,default=0.3)
-    parser.add_argument('--trainround', type=int, default=20)
-    parser.add_argument('--trainepochs', type=int, default=100)
-    parser.add_argument('--numOfEvaluations',type=int,default=1)
-    parser.add_argument('--overwrite',type=int,default=0) # overwrite previous network
-    parser.add_argument('--agentFirst',type=int,default=1) # agent or human play first
-    parser.add_argument('--batchsize', type=int,default=256)
+    parser.add_argument('--epochs', type=int, default=25)
+    parser.add_argument('--drop_rate', type=float, default=0.3)
+    parser.add_argument('--trainround', type=int, default=50)
+    parser.add_argument('--trainepochs', type=int, default=50)
+    parser.add_argument('--numOfEvaluations', type=int, default=1)
+    parser.add_argument('--overwrite', type=int, default=0)  # overwrite previous network
+    parser.add_argument('--agentFirst', type=int, default=1)  # agent or human play first
+    parser.add_argument('--batchsize', type=int, default=256)
+    parser.add_argument('--miniTrainingEpochs',type=int,default=10)
+    parser.add_argument('--buffersize', type=int, default=256)
+    parser.add_argument('--openReplayBuffer',type=bool,default=1)
+    parser.add_argument('--maxBufferSize',type=int,default=4096)
     args = parser.parse_args()
     args.device = ('cuda' if torch.cuda.is_available() else 'cpu')
     dataProcessor.initSimulator(Board.Board(args.size, args.numberForWin))
 
-    if train==1:
-        Training.Training(args)
-    elif train==0:
+    if train == 1:
+        Loss,WinRate = Training.Training(args)
+        exp = Experiment.Experiment(args)
+        exp.simplePlot(range(args.trainround), Loss, "Training Loss Curve", xlabel='Training Rounds',
+                       ylabel='Training Loss', color='blue', linestyle='-.')
+        exp.simplePlot(range(args.trainround), WinRate, "Winning Rate Curve", xlabel='Training Rounds',
+                       ylabel='Winning Rate', color='blue', linestyle='-.')
+        print("Loss and Winning Rate")
+        for i in Loss:
+            print(i,end=',')
+        print()
+        for i in WinRate:
+            print(i,end=',')
+        print()
+    elif train == 0:
+        # model.state_dict().
         args.device = 'cpu'
         timer.clear()
-        #Interface.Play(args,Interface.NetworkAgent(args))
-        Interface.Play(args,Interface.IntelligenceAgent(args))
-        #Interface.Play(args, Agent.SearchAgent(3,epsilon=0))
+        # Interface.Play(args,Interface.NetworkAgent(args))
+        Interface.Play(args, Interface.IntelligenceAgent(args))
+        # Interface.Play(args, Agent.SearchAgent(3,epsilon=0))
     elif train == 2:
         exp = Experiment.Experiment(args)
-        #agent = Interface.IntelligenceAgent(args)
-        #agent2 = Agent.SearchAgent(4)
-        #print("The win rate for Network: %.3f" %exp.evaluation(agent,agent2))
-        X,Y = exp.playWithBaselineInDifferentNumOfIterations()
-        exp.simplePlot(X,Y,title="Wining Strategy with Different Tree Iteration")
+        # agent = Interface.IntelligenceAgent(args)
+        # agent2 = Agent.SearchAgent(4)
+        # print("The win rate for Network: %.3f" %exp.evaluation(agent,agent2))
+        X, Y = exp.playWithBaselineInDifferentNumOfIterations(start=50, end=200, stride=50)
+        for i in X:
+            print(i, end=',')
+        print()
+        for i in Y:
+            print(i, end=',')
+        exp.simplePlot(X, Y, title="Winning Strategy with Different Tree Iteration", xlabel="Tree Iteration",
+                       ylabel="Winning Rate")
+        print(torch.tensor(Y).mean().item())
     elif train == 3:
-        lastk = 4
-        numConfig = lastk + 47
+        lastk = 0
+        numConfig = lastk + 1
         for k in range(lastk, numConfig):
             epsilon0 = round(random.uniform(0.2, 0.6), 2)
             epsilon1 = round(random.uniform(0.2, 0.6), 2)
@@ -60,7 +85,8 @@ def main(train):
             savePath = f"./searchPlayData/searchPlay-{k}"
             with open("./searchPlayData/configForEach", "a") as file:
                 file.write(f"k={k} depth0={depth0} depth1={depth1} epsilon0={epsilon0} epsilon1={epsilon1}\n")
-            print(f"\n\nk={k} depth0={depth0} depth1={depth1} epsilon0={epsilon0} epsilon1={epsilon1}\n----------------------START----------------------\n")
+            print(
+                f"\n\nk={k} depth0={depth0} depth1={depth1} epsilon0={epsilon0} epsilon1={epsilon1}\n----------------------START----------------------\n")
 
             with open("./logs/log.txt", "a") as file:
                 file.write(f"k={k} depth0={depth0} depth1={depth1} epsilon0={epsilon0} epsilon1={epsilon1}\n")
@@ -89,7 +115,7 @@ def main(train):
                             j += 1
                     finalDataList.append("end")
                     print(f"iteration {ite + 1}: search agent-{int(not t)} win the game")
-                    if (ite+1) % 50 == 0:
+                    if (ite + 1) % 50 == 0:
                         dataProcessor.saveData(finalDataList, savePath)
                     agent0Win += t
                 except:
@@ -99,7 +125,7 @@ def main(train):
             print(f"search agent0 win {agent0Win} games out of {totalGames}")
             with open("./logs/log.txt", "a") as file:
                 file.write(f"search agent0 win {agent0Win} games out of {totalGames}\n")
-    elif train==4:
+    elif train == 4:
         totalDataList = []
         for k in range(51):
             file = f"./searchPlayData/searchPlay-{k}"
@@ -110,8 +136,6 @@ def main(train):
         trainWorker.train(args.trainepochs, currentModel, totalDataList)
 
 
-
-
 if __name__ == '__main__':
     # 2 experiment; 1 to train; 0 to visualize the game; 3: sample data from search agent and gready agent. 4:train model using selfplay data.
-    main(0)
+    main(1)

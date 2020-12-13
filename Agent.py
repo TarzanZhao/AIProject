@@ -31,11 +31,12 @@ class Agent:
 
 
 class SelfplayAgent(Agent):
-    def __init__(self, numOfiterations, network, path):
+    def __init__(self, numOfiterations, network, path, eta = 1.0):
         self.datalist = []
         self.numOfiterations = numOfiterations
         self.network = network
-        self.mcts = MCTS.MCTS()
+        self.eta = eta
+        self.mcts = MCTS.MCTS(eta= self.eta)
         self.path = path
         self.finalDataList = []
         self.isFinished = 0

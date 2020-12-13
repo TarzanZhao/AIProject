@@ -8,6 +8,7 @@ from DataStorage import dataProcessor
 class Experiment():
     def __init__(self, args=None):
         self.args = args
+        self.depth = 2
 
     def getWinScore(self, game, agent):
         win = 0
@@ -19,7 +20,7 @@ class Experiment():
     def evaluation(self,agent1,agent2, agentFirstOnly = True):
         board = Board.Board(self.args.size, self.args.numberForWin)
         game = Game.Game(agent1, agent2, board)
-        Score = {agent1: 0, agent2: 1}
+        Score = {agent1: 0, agent2: 0}
         print("First Player Case:")
         for i in range(1, 1 + self.args.numOfEvaluations):
             winner = game.run()
@@ -38,15 +39,19 @@ class Experiment():
                     print("The %dth game: Win!" % (i + self.args.numOfEvaluations))
                 else:
                     print("The %dth game: Lose!" % (i + self.args.numOfEvaluations))
-        return Score[agent1] / Score[agent2]
+        return Score[agent1]/self.args.numOfEvaluations
 
-    def simplePlot(self,X,Y,title,xlabel="x",ylabel='y',color='blue'):
-        plt.plot(X,Y,color = color)
+    def simplePlot(self,X,Y,title,xlabel="x",ylabel='y',color='blue',linestyle='-.'):
+        plt.plot(X,Y,color = color,linestyle=linestyle)
         plt.title(title)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
-        plt.savefig(title+'.png')
-        plt.show()
+        plt.savefig('figure/'+title+'.png')
+        #plt.show()
+
+    def evaluationWithBaseLine(self,agent, agentFirstOnly = True):
+        agent2 = Agent.SearchAgent(depth=self.depth,epsilon=0)
+        return self.evaluation(agent,agent2,agentFirstOnly)
 
     def playWithBaselineInDifferentNumOfIterations(self, model=None, agentFirstOnly = True, start = 100,end = 1600, stride = 100):
         if model is None:
@@ -55,8 +60,9 @@ class Experiment():
         print("baseline: depth 3")
         baseline = Agent.SearchAgent(3,epsilon=0)
         winRate = []
+
         for iter in range(start,end,stride):
-            agent = Agent.IntelligentAgent(iter,model)
+            agent = Agent.IntelligentAgent(iter if iter!=0 else 1,model)
             winRate.append(self.evaluation(agent,baseline, agentFirstOnly))
         return range(start,end,stride), winRate
 

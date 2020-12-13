@@ -28,13 +28,16 @@ class GUI(QWidget):
         self.Restart = QPushButton("Restart", self)
         self.ShowValue = QPushButton("ShowValue",self)
         self.RandomSelfplay = QPushButton("RandomVisualize",self)
+        self.RandomSearchPlay = QPushButton("SearchPlayVisualize",self)
         self.Restart.clicked.connect(self.OnRestart)
         self.ShowValue.clicked.connect(self.OnShowValue)
         self.RandomSelfplay.clicked.connect(self.OnRandomSelfplay)
+        self.RandomSearchPlay.clicked.connect(self.OnRandomSearchPlay)
         self.value = 1
         self.isShowValue = 1
         self.isShowSelfplay = 0
         self.policy = {}
+        self.searchPlayData = None
         self.selfplayData = None
         #self.RestartVisualRun = QPushButton("RestartVisual", self)
         #self.RestartVisualRun.clicked.connect(self.OnRestartVisual)
@@ -113,9 +116,10 @@ class GUI(QWidget):
         self.move(30, 80)
         self.setWindowTitle('Chess Board')
         self.show()
-        self.Restart.setGeometry(QRect(900, 200, 200, 100))
-        self.ShowValue.setGeometry(QRect(900,400,200,100))
-        self.RandomSelfplay.setGeometry(QRect(900,600,200,100))
+        self.Restart.setGeometry(QRect(900, 50, 200, 100))
+        self.ShowValue.setGeometry(QRect(900,250,200,100))
+        self.RandomSelfplay.setGeometry(QRect(900,450,200,100))
+        self.RandomSearchPlay.setGeometry(QRect(900,650,200,100))
         #self.RestartVisualRun.setGeometry(QRect(900, 600, 200, 100))
         if self.agentFirst:
             self.run()
@@ -139,7 +143,6 @@ class GUI(QWidget):
         if self.win:
             return 0
         action = self.agent.getAction(self.Board)
-        timer.showTimeInfo("Time Information")
         self.policy = self.agent.getActionProPair()
         self.down(action)
 
@@ -173,9 +176,21 @@ class GUI(QWidget):
         play = self.selfplayData[index]
         self.clear()
         self.showPlay(play)
+        print(play)
         self.update()
         self.win = 1
 
+    def OnRandomSearchPlay(self):
+        self.isShowValue = 1
+        if self.searchPlayData is None:
+            self.searchPlayData = dataProcessor.getLastestSearchPlay()
+        index = np.random.randint(0,len(self.searchPlayData))
+        play = self.searchPlayData[index]
+        print(play)
+        self.clear()
+        self.showPlay(play)
+        self.update()
+        self.win = 1
     #def OnRestartVisual(self):
     #    self.Board.init()
     #    self.agent.init()
