@@ -40,6 +40,7 @@ class GUI(QWidget):
         self.value = 1
         self.isShowValue = 1
         self.isShowSelfplay = 0
+        self.isShowSearchPlay = 0
         self.policy = {}
         self.searchPlayData = None
         self.selfplayData = None
@@ -87,7 +88,7 @@ class GUI(QWidget):
                 qp.drawText(int(TL[0] + self.gap/1.4 + 0.5), int(TL[1] + self.gap * 1.2 + 0.5), "%d" % num)
             num +=1
             c = 1 - c
-        if self.isShowValue and not self.isShowSelfplay and len(self.Board.actions)>0:
+        if self.isShowValue and not self.isShowSelfplay and not self.isShowSearchPlay and len(self.Board.actions)>0:
             last = self.Board.actions[-1]
             TL = self.posToTopleft(last)
             gold = QColor(255,255,0)
@@ -187,7 +188,7 @@ class GUI(QWidget):
         self.win = 1
 
     def OnRandomSearchPlay(self):
-        self.isShowValue = 1
+        self.isShowSearchPlay = 1
         if self.searchPlayData is None:
             self.searchPlayData = dataProcessor.getLastestSearchPlay()
         index = np.random.randint(0,len(self.searchPlayData))

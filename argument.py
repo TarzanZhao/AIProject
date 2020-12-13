@@ -34,8 +34,8 @@ def initialize_args():
     parser.add_argument('--sampleSize', type=int, default=500)
     parser.add_argument('--epsilon0', type=Tuple[float], default=(0.1, 0.2))
     parser.add_argument('--epsilon1', type=Tuple[float], default=(0.1, 0.2))
-    parser.add_argument('--probDepth0', type=Tuple[float], default=(0.05, 0.15, 0.2, 0.6) )
-    parser.add_argument('--probDepth1', type=Tuple[float], default=(0.05, 0.15, 0.2, 0.6) )
+    parser.add_argument('--probDepth0', type=Tuple[float], default=(0.0,0.0,0.5,0.5) )
+    parser.add_argument('--probDepth1', type=Tuple[float], default=(0.0,0.0,0.5,0.5) )
 
     parser.add_argument('--n_log_step', type=int, default=15)
     parser.add_argument('--n_save_step', type=int, default=50)

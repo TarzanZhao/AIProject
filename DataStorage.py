@@ -110,7 +110,7 @@ class DataProcessor:
         return dataList
 
     def getLastestSearchPlay(self):
-        path = './searchPlayData'
+        path = os.path.join(self.args.data_root, self.args.load_data_folder)
         files = os.listdir(path)
         latestSearchPlay = -1
         for file in files:
@@ -119,12 +119,12 @@ class DataProcessor:
                 print(filestr)
                 if filestr.startswith("searchPlay-"):
                     idstr = filestr[11:]
-                    print(idstr)
+#                    print(idstr)
                     latestSearchPlay = max(latestSearchPlay, int(idstr))
         if latestSearchPlay == -1:
             return []
         else:
-            file = f"searchPlayData/searchPlay-{latestSearchPlay}"
+            file = os.path.join(path,f"searchPlay-{latestSearchPlay}")
             dataList = []
             dataList.append([])
             num = 0

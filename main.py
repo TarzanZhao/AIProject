@@ -45,8 +45,8 @@ def visualize(args, logger, dataProcessor):
     args.device = 'cpu'
     timer.clear()
     # Interface.Play(args,Interface.NetworkAgent(args))
-    Interface.Play(args, Interface.IntelligenceAgent(args, args.modelID))
-    #Interface.Play(args, Agent.SearchAgent(3,epsilon=0))
+    # Interface.Play(args, Interface.IntelligenceAgent(args, args.modelID))
+    Interface.Play(args, Agent.SearchAgent(3,epsilon=0.05))
 
 
 def experiment(args, logger, dataProcessor):
@@ -119,6 +119,7 @@ if __name__ == '__main__':
     logger.initialize_logger(args.log_folder, args.todo, 'info')
     logger = logger.get_logger()
     timer.init()
+    argument.print_args(args, logger)
 
     dataProcessor.initSimulator(Board.Board(args.size, args.numberForWin))
 

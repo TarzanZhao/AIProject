@@ -21,7 +21,7 @@ class AlphaBetaSearch:
         actions = simulator.getActions()
         m = simulator.boardSize
         if not actions:
-            action = (m//2 + randint(-n, n), m//2 + randint(-n, n))
+            action = (m//2 + randint(0, 1), m//2 + randint(0, 1))
 #            print(action)
             if not returnPolicy:
                 return [action]
