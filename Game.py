@@ -16,11 +16,13 @@ class Game:
         self.args = argument.get_args()
         self.logger = logger.get_logger()
         self.num_run = 0
+        self.actionSequence = []
 
     def gameInit(self):
         self.agent0.init()
         self.agent1.init()
         self.simulator.init()
+        self.actionSequence = []
 
     def switchAgents(self):
         self.agent0, self.agent1 = self.agent1, self.agent0
@@ -40,7 +42,8 @@ class Game:
             #            print(bd.numpy().tolist())
             if action in self.simulator.getAvailableActions():
                 self.simulator.takeAction(action)
-#            print(action)
+                self.actionSequence.append(action)
+            #print(action)
             # bd = self.simulator.getCompleteBoard().numpy().tolist()
             # for i in range(self.simulator.getSize()):
             #     for j in range(self.simulator.getSize()):
@@ -50,7 +53,7 @@ class Game:
         winner = self.simulator.getWinner()
         if self.args is not None and self.args.todo == 'sampledata':
             if self.num_run % self.args.n_log_step == 0:
-                self.logger.info(torch.Tensor(self.simulator.getBoardList(0))+torch.Tensor(self.simulator.getBoardList(1))*2)
+                self.logger.info(torch.tensor(self.simulator.getBoardList(0))+torch.tensor(self.simulator.getBoardList(1))*2)
                 self.logger.info("Num of play: %d" % len(self.simulator.actions))
             self.num_run += 1
 
@@ -60,6 +63,9 @@ class Game:
         self.agent1.finish(winner)
         self.simulator.finish()
         return agentMap[winner]
+
+    def getActionSequence(self):
+        return self.actionSequence
 
     def __str__(self):
         return "Game Instance"

@@ -33,7 +33,7 @@ class Agent:
 
 
 class SelfplayAgent(Agent):
-    def __init__(self, numOfiterations, network, path, eta = 1.0, decay = 0.85, balance = 1):
+    def __init__(self, numOfiterations, network, path, eta = 1.0, decay = 0.85, rollout=None, balance = 0):
         self.datalist = []
         self.numOfiterations = numOfiterations
         self.network = ExpandingFn(network)
@@ -44,6 +44,7 @@ class SelfplayAgent(Agent):
         self.path = path
         self.finalDataList = []
         self.isFinished = 0
+        self.rollout = rollout
         pass
 
     def init(self):
@@ -53,7 +54,7 @@ class SelfplayAgent(Agent):
 
     def getAction(self, simulator):
         TimeID = timer.startTime("Get action")
-        self.mcts.run(self.numOfiterations, simulator, self.network, rolloutFn=randomRolloutFn, balance=self.balance)
+        self.mcts.run(self.numOfiterations, simulator, self.network, rolloutFn=self.rollout, balance=self.balance)
         act_pro_pair = self.mcts.getPolicy()
         keys = []
         values = []
@@ -99,15 +100,16 @@ class RandomAgent(Agent):
 
 
 class IntelligentAgent(Agent):
-    def __init__(self, numOfiterations, network, rolloutFn = randomRolloutFn):
+    def __init__(self, numOfiterations, network, rolloutFn=None , balance = 0):
         self.numOfiterations = numOfiterations
         self.network = ExpandingFn(network)
         self.act_pro_pair = {}
-        self.randomRolloutFn = rolloutFn
+        self.rollout = rolloutFn
+        self.balance = balance
 
     def getAction(self, simulator):
         mcts = MCTS.MCTS(C=5)
-        mcts.run(self.numOfiterations,simulator,self.network, rolloutFn=self.randomRolloutFn, balance=1)
+        mcts.run(self.numOfiterations,simulator,self.network, rolloutFn=self.rollout, balance=self.balance)
         self.act_pro_pair = mcts.getPolicy()
         p = 0
         action = (-1,-1)
@@ -121,6 +123,9 @@ class IntelligentAgent(Agent):
 
     def getActionProPair(self):
         return self.act_pro_pair
+
+    def setNumOfIterations(self, numOfIterations):
+        self.numOfiterations = numOfIterations
 
     def __str__(self):
         return "IntelligentAgent Instance"

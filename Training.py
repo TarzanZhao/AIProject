@@ -14,6 +14,7 @@ from Experiment import Experiment
 import random
 import argument
 from logger import get_logger
+from RolloutFn import minMaxRolloutFn,randomRolloutFn
 
 
 class MyDataset(Dataset):
@@ -161,7 +162,8 @@ def Training():
             model = PolicyValueFn(args).to(device=args.device)
         eta = math.log(args.trainround / rd) + 1
         file = os.path.join(args.data_folder, f"selfplay-{currentModel+1}.txt")
-        agent1 = Agent.SelfplayAgent(args.numOfIterations, model, file, eta)
+        #rollout =randomRolloutFn(cnt=7)
+        agent1 = Agent.SelfplayAgent(args.numOfIterations, model, file, eta,rollout=None,balance=0)
         b = Board.Board(args.size, args.numberForWin)
         g = Game.Game(agent0=agent1, agent1=agent1, simulator=b)
 
@@ -202,33 +204,3 @@ def Training():
         WinRate.append(exp.evaluationWithBaseLine(agentTest))
         logger.info("WinRate: %.3f" %WinRate[-1])
     return Loss, WinRate
-
-
-# compare current and previous network
-def Evaluation(args):
-    currentModel = dataProcessor.getLatestNetworkID()
-    model1 = dataProcessor.loadNetwork(args, currentModel)
-    model2 = dataProcessor.loadNetwork(args, currentModel - 1)
-    agent1 = Agent.IntelligentAgent(2 * args.numOfIterations, model1)
-    agent2 = Agent.IntelligentAgent(2 * args.numOfIterations, model2)
-    board = Board.Board(args.size, args.numberForWin)
-    game = Game.Game(agent1, agent2, board)
-    Score = {agent1: 0, agent2: 1}
-    print("First Player Case:")
-    for i in range(1, 1 + args.numOfEvaluations):
-        winner = game.run()
-        Score[winner] += 1
-        if winner == agent1:
-            print("The %dth game: Win!" % i)
-        else:
-            print("The %dth game: Lose!" % i)
-    game = Game.Game(agent2, agent1, board)
-    print("Second Player Case:")
-    for i in range(1, 1 + args.numOfEvaluations):
-        winner = game.run()
-        Score[winner] += 1
-        if winner == agent1:
-            print("The %dth game: Win!" % (i + args.numOfEvaluations))
-        else:
-            print("The %dth game: Lose!" % (i + args.numOfEvaluations))
-    return Score[agent1] / Score[agent2]

@@ -110,7 +110,7 @@ class DataProcessor:
         return dataList
 
     def getLastestSearchPlay(self):
-        path = './searchPlayData'
+        path = self.args.load_data_folder
         files = os.listdir(path)
         latestSearchPlay = -1
         for file in files:

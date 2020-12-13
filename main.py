@@ -8,6 +8,7 @@ import Experiment
 import Game
 from Timer import timer
 from DataStorage import dataProcessor
+import PolicyValueFn
 import Agent
 import random
 import numpy as np
@@ -22,14 +23,14 @@ from RolloutFn import minMaxRolloutFn,randomRolloutFn
 
 
 def train(args, logger, dataProcessor):
-    print("-2")
     Loss, WinRate = Training.Training()
-    print("-1")
     exp = Experiment.Experiment()
-    exp.simplePlot(range(args.trainround), Loss, "Training Loss Curve", xlabel='Training Rounds',
+    fig = exp.simplePlot(range(args.trainround), Loss, "Training Loss Curve", xlabel='Training Rounds',
                    ylabel='Training Loss', color='blue', linestyle='-.')
-    exp.simplePlot(range(args.trainround), WinRate, "Winning Rate Curve", xlabel='Training Rounds',
+    exp.saveFig(fig,name="Training Loss Curve")
+    fig = exp.simplePlot(range(args.trainround), WinRate, "Winning Rate Curve", xlabel='Training Rounds',
                    ylabel='Winning Rate', color='blue', linestyle='-.')
+    exp.saveFig(fig, name="Winning Rate Curve")
     logger.info("Loss and Winning Rate")
     loss_log = ''
     for i in Loss:
@@ -45,17 +46,16 @@ def visualize(args, logger, dataProcessor):
     args.device = 'cpu'
     timer.clear()
     # Interface.Play(args,Interface.NetworkAgent(args))
-    Interface.Play(args, Interface.IntelligenceAgent(args, args.modelID))
-    #Interface.Play(args, Agent.SearchAgent(3,epsilon=0))
+    #Interface.Play(args, Interface.IntelligenceAgent(args, args.modelID))
+    Interface.Play(args, Agent.SearchAgent(3,epsilon=0))
 
 
 def experiment(args, logger, dataProcessor):
     exp = Experiment.Experiment()
-    # agent = Interface.IntelligenceAgent(args)
-    # agent2 = Agent.SearchAgent(4)
-    # logger.info("The win rate for Network: %.3f" %exp.evaluation(agent,agent2))
-    X, Y = exp.playWithBaselineInDifferentNumOfIterations()
-    exp.simplePlot(X, Y, title="Wining Strategy with Different Tree Iteration")
+
+    model = PolicyValueFn.PolicyValueFn(args).to(args.device)
+    data = exp.evaluationForNetworkWithFourRollout(model,start=10,end=50,step=10,random_cnt=1,numOfEvaluations=1)
+    logger.info(data)
 
 def sampledata(args, logger, dataProcessor):
     for k in range(args.sampleRound):
@@ -121,6 +121,8 @@ if __name__ == '__main__':
     timer.init()
 
     dataProcessor.initSimulator(Board.Board(args.size, args.numberForWin))
+
+    args.save_folder = 'test_visual'
 
     if args.todo == 'selfplaytrain':
         train(args, logger, dataProcessor)
