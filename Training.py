@@ -12,6 +12,8 @@ import os
 import math
 from Experiment import Experiment
 import random
+import argument
+from logger import get_logger
 
 
 class MyDataset(Dataset):
@@ -59,8 +61,9 @@ class MyDataset(Dataset):
 
 
 class NetworkTraining:
-    def __init__(self, arg):
-        self.arg = arg
+    def __init__(self):
+        self.arg = argument.get_args()
+        self.logger = get_logger()
         pass
 
     def getReplayData(self, currentModel, dataList):
@@ -94,8 +97,8 @@ class NetworkTraining:
 
     def train(self, numOfEpoch, currentModel, dataList=None, update=True):
         if dataList is None:
-            file = f"./selfplay/selfplay-{currentModel}.txt"
-            dataList = dataProcessor.retrieveData(file)
+            dataList = dataProcessor.retrieveData(os.path.join(self.arg.data_folder, f"selfplay-{currentModel}.txt"))
+
         trainSet = MyDataset(dataList)
         dataloader = DataLoader(dataset=trainSet,
                                 batch_size=self.arg.batchsize,
@@ -108,16 +111,12 @@ class NetworkTraining:
         network = PolicyValueFn(self.arg)
         x = 1 if update else 0
         if currentModel - x >= 0:
-            print(f"load network: {currentModel-x}")
-            network.load_state_dict(torch.load(f'network/network-{currentModel - x}.pt',map_location=torch.device(self.arg.device)))
+            self.logger.info(f"load network: {currentModel-x}")
+            network.load_state_dict(torch.load(os.path.join(self.arg.model_folder, f"network-{currentModel-x }.pt"),\
+                                               map_location=torch.device(self.arg.device)) )
 
         network.to(self.arg.device)
         optimizer = optim.Adam(network.parameters())
-        trainLossFile = "trainingloss/trainingloss-" + str(currentModel)
-        if os.path.exists(trainLossFile):
-            os.remove(trainLossFile)
-            print("successfully deleted " + trainLossFile)
-
         network.train()
         total_loss = 0
         for epoch in range(1, numOfEpoch + 1):
@@ -133,47 +132,46 @@ class NetworkTraining:
                 loss.backward()
                 optimizer.step()
                 cnt += 1
-                if cnt % 100 == 0:
-                    with open(trainLossFile, mode="a") as file:
-                        file.write("i={} loss={:.6f}\n".format(i, loss.item()))
+                if cnt % self.arg.n_log_step == 0:
+                    self.logger.info("i={} loss={:.6f}".format(i, loss.item()))
             total_loss = total_loss / cnt
-            print("epoch={} average_loss={:.6f}".format(epoch, total_loss))
-            with open(trainLossFile, mode="a") as file:
-                file.write("epoch={} average_loss={:.6f}\n".format(epoch, loss))
+            self.logger.info("epoch={} average_loss={:.6f}".format(epoch, total_loss))
 
-            if epoch % 10 == 0:
-                torch.save(network.state_dict(), f"network/network-{currentModel}.pt")
-        torch.save(network.state_dict(), f"network/network-{currentModel}.pt")
-        print(f"save network: {currentModel}")
+            if epoch % self.arg.n_save_step == 0:
+                torch.save(network.state_dict(), os.path.join(self.arg.model_folder, f"network-{currentModel}.pt"))
+        torch.save(network.state_dict(), os.path.join(self.arg.model_folder, f"network-{currentModel}.pt"))
+        self.logger.info(f"save network: {currentModel}")
         return total_loss
 
 
-def Training(args):
+def Training():
+    args = argument.get_args()
+    logger = get_logger()
     currentModel = -1 if args.overwrite else dataProcessor.getLatestNetworkID()
-    trainWorker = NetworkTraining(args)
+    trainWorker = NetworkTraining()
     replayBuffer = []
     Loss = []
     WinRate = []
 
     for rd in range(1, args.trainround + 1):
-        print("round:%d" % rd)
+        logger.info("round:%d" % rd)
         if currentModel != -1:
             model = dataProcessor.loadNetwork(args, currentModel)
         else:
             model = PolicyValueFn(args).to(device=args.device)
         eta = math.log(args.trainround / rd) + 1
-        file = f"./selfplay/selfplay-{currentModel + 1}.txt"
+        file = os.path.join(args.data_folder, f"selfplay-{currentModel+1}.txt")
         agent1 = Agent.SelfplayAgent(args.numOfIterations, model, file, eta)
         b = Board.Board(args.size, args.numberForWin)
         g = Game.Game(agent0=agent1, agent1=agent1, simulator=b)
 
         for i in range(1, args.epochs + 1):
-            print("epoch %d" % i)
+            logger.info("epoch %d" % i)
             TimeID = timer.startTime("play time")
             g.run()
             timer.endTime(TimeID)
             timer.showTime(TimeID)
-            if i % 25 == 0:
+            if i % args.n_save_step == 0:
                 agent1.saveData()
             if args.openReplayBuffer and len(replayBuffer)>args.buffersize:
                 buffer = []
@@ -200,9 +198,9 @@ def Training(args):
         #    timer.showTime(TimeID)
         agentTest = Agent.IntelligentAgent(args.numOfIterations, dataProcessor.loadNetwork(args))
 
-        exp = Experiment(args)
+        exp = Experiment()
         WinRate.append(exp.evaluationWithBaseLine(agentTest))
-        print("WinRate: %.3f" %WinRate[-1])
+        logger.info("WinRate: %.3f" %WinRate[-1])
     return Loss, WinRate
 
 

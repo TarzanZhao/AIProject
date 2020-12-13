@@ -2,6 +2,8 @@ import torch
 from PolicyValueFn import PolicyValueFn
 import json
 import os
+import argument
+import logger
 
 class DataProcessor:
     def __init__(self):
@@ -9,6 +11,8 @@ class DataProcessor:
 
     def initSimulator(self,simulator):
         self.simulator = simulator
+        self.logger = logger.get_logger()
+        self.args = argument.get_args()
 
     def saveData(self, dataList, file):
         """
@@ -16,7 +20,7 @@ class DataProcessor:
         :param file: file to store the data.
         :return:
         """
-        print("Try saving data into "+file+".")
+        self.logger.info("Try saving data into "+file+".")
         dataForSave = []
         for data in dataList:
             if data == 'end':
@@ -25,7 +29,7 @@ class DataProcessor:
                 dataForSave.append((data[0], data[1], data[2]))
         with open(file, "w") as F:
             F.write(json.dumps(dataForSave))
-        print("Successfully save data into "+file+".")
+        self.logger.info("Successfully save data into "+file+".")
 
     def retrieveData(self, file):
         """
@@ -48,20 +52,20 @@ class DataProcessor:
                 dataList.append(tuple([torch.tensor(self.simulator.getCurrentState(),dtype=torch.float),
                                        torch.tensor(data[1]), torch.tensor(data[2], dtype=torch.float)]))
                 self.simulator.takeAction(tuple(data[0]))
-        print(f"load {nPlay} plays' data")
+        self.logger.info(f"load {nPlay} plays' data")
         return dataList
 
     def getLatestNetworkID(self):
-        path = './network'
+        path = self.args.model_folder
         files = os.listdir(path)
         currentModel = -1
         for file in files:
             if not os.path.isdir(file):
                 filestr = file.split("/")[-1]
-                print(filestr)
+                self.logger.info(filestr)
                 if filestr.startswith("network-"):
                     idstr = filestr[8:-3]
-                    print(idstr)
+#                    print(idstr)
                     currentModel = max(currentModel, int(idstr))
         return currentModel
 
@@ -69,12 +73,12 @@ class DataProcessor:
         model = PolicyValueFn(args)
         if currentModelID is None:
             currentModelID = self.getLatestNetworkID()
-        model.load_state_dict(torch.load(f'network/network-{currentModelID}.pt', map_location=torch.device(args.device)))
+        model.load_state_dict(torch.load(os.path.join(self.args.model_folder, f'network-{currentModelID}.pt'), map_location=torch.device(args.device)))
         model.to(args.device)
         return model
 
     def getLastestSelfplay(self):
-        path = './selfplay'
+        path = self.args.data_folder
         files = os.listdir(path)
         latestSelfplay = -1
         for file in files:
@@ -83,12 +87,12 @@ class DataProcessor:
                 print(filestr)
                 if filestr.startswith("selfplay-"):
                     idstr = filestr[9:-4]
-                    print(idstr)
+#                    print(idstr)
                     latestSelfplay = max(latestSelfplay, int(idstr))
         if latestSelfplay == -1:
             return []
         else:
-            file = f"selfplay/selfplay-{latestSelfplay}.txt"
+            file = os.path.join(path, f"selfplay-{latestSelfplay}.txt")
             dataList = []
             dataList.append([])
             num = 0

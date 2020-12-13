@@ -2,10 +2,15 @@ import time
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import numpy as np
+from logger import get_logger
 
 class Timer:
     def __init__(self):
+        self.init()
+
+    def init(self):
         self.timeTable = {}
+        self.logger = get_logger()
 
     def clear(self):
         self.timeTable = {}
@@ -26,12 +31,12 @@ class Timer:
 
     def showTime(self, name):
         if not name in self.timeTable:
-            print("Wrong name!")
+            self.logger.info("Wrong name!")
             return
         elapsed_time = self.timeTable[name]
         elapsed_mins = int(elapsed_time / 60)
         elapsed_secs = int(elapsed_time - (elapsed_mins * 60))
-        print("Time for \"" + name + "\" is: %d m %d s" % (elapsed_mins, elapsed_secs))
+        self.logger.info("Time for \"" + name + "\" is: %d m %d s" % (elapsed_mins, elapsed_secs))
 
     def showTimeInfo(self, title):
         labels = list(self.timeTable.keys())

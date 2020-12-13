@@ -167,9 +167,7 @@ class AlphaBetaSearch:
                 best = value
                 bestAction = act
         if self.totalValue == 0:
-            print(bestAction)
-            raise AssertionError
-#        print(bestAction)
+            raise ArithmeticError
         return bestAction
 
     def getPolicy(self):
