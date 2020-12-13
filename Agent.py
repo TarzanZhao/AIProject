@@ -191,7 +191,7 @@ class SearchAgent(Agent):
 class GreedyAgent(SearchAgent):
     def __init__(self):
         super().__init__(depth=0)
-        print(self.depth)
+        #print(self.depth)
 
     def __dir__(self):
         return "GreedyAgent Instance"

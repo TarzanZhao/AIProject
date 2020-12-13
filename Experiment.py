@@ -3,11 +3,14 @@ import Board
 import Game
 import matplotlib.pyplot as plt
 from DataStorage import dataProcessor
-
+import argument
+import logger
+import os
 
 class Experiment():
-    def __init__(self, args=None):
-        self.args = args
+    def __init__(self):
+        self.args = argument.get_args()
+        self.logger = logger.get_logger()
         self.depth = 2
 
     def getWinScore(self, game, agent):
@@ -21,32 +24,33 @@ class Experiment():
         board = Board.Board(self.args.size, self.args.numberForWin)
         game = Game.Game(agent1, agent2, board)
         Score = {agent1: 0, agent2: 0}
-        print("First Player Case:")
+        self.logger.info("First Player Case:")
         for i in range(1, 1 + self.args.numOfEvaluations):
             winner = game.run()
             Score[winner] += 1
             if winner == agent1:
-                print("The %dth game: Win!" % i)
+                self.logger.info("The %dth game: Win!" % i)
             else:
-                print("The %dth game: Lose!" % i)
+                self.logger.info("The %dth game: Lose!" % i)
         if not agentFirstOnly:
             game = Game.Game(agent2, agent1, board)
-            print("Second Player Case:")
+            self.logger.info("Second Player Case:")
             for i in range(1, 1 + self.args.numOfEvaluations):
                 winner = game.run()
                 Score[winner] += 1
                 if winner == agent1:
-                    print("The %dth game: Win!" % (i + self.args.numOfEvaluations))
+                    self.logger.info("The %dth game: Win!" % (i + self.args.numOfEvaluations))
                 else:
-                    print("The %dth game: Lose!" % (i + self.args.numOfEvaluations))
+                    self.logger.info("The %dth game: Lose!" % (i + self.args.numOfEvaluations))
         return Score[agent1]/(2*self.args.numOfEvaluations-self.args.numOfEvaluations*agentFirstOnly)
+
 
     def simplePlot(self,X,Y,title,xlabel="x",ylabel='y',color='blue',linestyle='-.'):
         plt.plot(X,Y,color = color,linestyle=linestyle)
         plt.title(title)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
-        plt.savefig('figure/'+title+'.png')
+        plt.savefig(os.path.join(self.args.figure_folder, title+'.png'))
         #plt.show()
 
     def evaluationWithBaseLine(self,agent, agentFirstOnly = True):
@@ -56,8 +60,8 @@ class Experiment():
     def playWithBaselineInDifferentNumOfIterations(self, model=None, agentFirstOnly = True, start = 100,end = 1600, stride = 100):
         if model is None:
             model = dataProcessor.loadNetwork(self.args)
-        print("Experiment for influence of different number of tree iterations")
-        print("baseline: depth 3")
+        self.logger.info("Experiment for influence of different number of tree iterations")
+        self.logger.info("baseline: depth 3")
         baseline = Agent.SearchAgent(3,epsilon=0)
         winRate = []
 
@@ -74,7 +78,7 @@ class Experiment():
             board = Board.Board(self.args.size, self.args.numberForWin)
             game = Game.Game(agent, agent, board)
             winRate.append(self.getWinScore(game, agent))
-            print("Iterations: %d, WinRate: %.2f" % (iter, winRate[-1]))
+            self.logger.info("Iterations: %d, WinRate: %.2f" % (iter, winRate[-1]))
 
         plt.figure()
         plt.xlabel("Number of Iterations per Movem")

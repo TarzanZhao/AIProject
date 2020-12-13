@@ -1,5 +1,8 @@
 from Timer import timer
 import torch
+import argument
+import logger
+
 class Game:
     def __init__(self, agent0, agent1, simulator):
         """
@@ -10,15 +13,14 @@ class Game:
         self.agent0 = agent0
         self.agent1 = agent1
         self.simulator = simulator
+        self.args = argument.get_args()
+        self.logger = logger.get_logger()
+        self.num_run = 0
 
     def gameInit(self):
         self.agent0.init()
         self.agent1.init()
         self.simulator.init()
-        #if str(self.agent0)=="SearchAgent Instance" or str(self.agent1)== "SearchAgent Instance":
-        #    self.simulator.setFeatureUpdate(True)
-        #else:
-        #    self.simulator.setFeatureUpdate(False)
 
     def switchAgents(self):
         self.agent0, self.agent1 = self.agent1, self.agent0
@@ -38,7 +40,7 @@ class Game:
             #            print(bd.numpy().tolist())
             if action in self.simulator.getAvailableActions():
                 self.simulator.takeAction(action)
-            print(action)
+#            print(action)
             # bd = self.simulator.getCompleteBoard().numpy().tolist()
             # for i in range(self.simulator.getSize()):
             #     for j in range(self.simulator.getSize()):
@@ -46,8 +48,13 @@ class Game:
             #     print("")
 
         winner = self.simulator.getWinner()
-        print(torch.tensor(self.simulator.getBoardList(0))+torch.tensor(self.simulator.getBoardList(1))*2)
-        print("Num of play: %d" %len(self.simulator.actions))
+        if self.args is not None and self.args.todo == 'sampledata':
+            if self.num_run % self.args.n_log_step == 0:
+                self.logger.info(torch.Tensor(self.simulator.getBoardList(0))+torch.Tensor(self.simulator.getBoardList(1))*2)
+                self.logger.info("Num of play: %d" % len(self.simulator.actions))
+            self.num_run += 1
+
+
 #        print(self.simulator.actions)
         self.agent0.finish(winner)
         self.agent1.finish(winner)
