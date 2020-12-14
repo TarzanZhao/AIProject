@@ -9,6 +9,7 @@ import numpy as np
 import torch
 from Timer import timer
 from DataStorage import dataProcessor
+from RolloutFn import  randomRolloutFn,minMaxRolloutFn
 
 
 class GUI(QWidget):
@@ -218,11 +219,11 @@ class GUI(QWidget):
 
 def IntelligenceAgent(args, modelID=None):
     model = dataProcessor.loadNetwork(args, modelID)
-    agent = Agent.IntelligentAgent(args.numOfIterations, model)
+    agent = Agent.IntelligentAgent(args.numOfIterations, model, randomRolloutFn)
     return agent
 
-def NetworkAgent(args):
-    model = dataProcessor.loadNetwork(args)
+def NetworkAgent(args, modelID=None):
+    model = dataProcessor.loadNetwork(args, modelID)
     agent = Agent.NetWorkAgent(model)
     return agent
 

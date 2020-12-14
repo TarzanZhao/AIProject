@@ -99,7 +99,7 @@ class RandomAgent(Agent):
 
 
 class IntelligentAgent(Agent):
-    def __init__(self, numOfiterations, network, rolloutFn = randomRolloutFn):
+    def __init__(self, numOfiterations, network, rolloutFn = minMaxRolloutFn):
         self.numOfiterations = numOfiterations
         self.network = ExpandingFn(network)
         self.act_pro_pair = {}

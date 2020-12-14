@@ -44,9 +44,9 @@ def visualize(args, logger, dataProcessor):
     # model.state_dict().
     args.device = 'cpu'
     timer.clear()
-    # Interface.Play(args,Interface.NetworkAgent(args))
-    # Interface.Play(args, Interface.IntelligenceAgent(args, args.modelID))
-    Interface.Play(args, Agent.SearchAgent(3,epsilon=0.05))
+    #Interface.Play(args,Interface.NetworkAgent(args, args.modelID))
+    Interface.Play(args, Interface.IntelligenceAgent(args, args.modelID))
+    # Interface.Play(args, Agent.SearchAgent(3,epsilon=0.05))
 
 
 def experiment(args, logger, dataProcessor):

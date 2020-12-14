@@ -19,7 +19,7 @@ def minMaxRolloutFn(simulator):
 def randomRolloutFn(simulator):
     view = simulator.getCurrentPlayer()
     z = 0
-    cnt = 1
+    cnt = 30
     for i in range(cnt):
         simu = copy.deepcopy(simulator)
         while not simu.isFinish():
