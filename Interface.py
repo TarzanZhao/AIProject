@@ -40,8 +40,7 @@ class GUI(QWidget):
         self.RandomSearchPlay.clicked.connect(self.OnRandomSearchPlay)
         self.value = 1
         self.isShowValue = 1
-        self.isShowSelfplay = 0
-        self.isShowSearchPlay = 0
+        self.Visualization = 0
         self.policy = {}
         self.searchPlayData = None
         self.selfplayData = None
@@ -89,7 +88,7 @@ class GUI(QWidget):
                 qp.drawText(int(TL[0] + self.gap/1.4 + 0.5), int(TL[1] + self.gap * 1.2 + 0.5), "%d" % num)
             num +=1
             c = 1 - c
-        if self.isShowValue and not self.isShowSelfplay and not self.isShowSearchPlay and len(self.Board.actions)>0:
+        if self.isShowValue and not self.Visualization and len(self.Board.actions)>0:
             last = self.Board.actions[-1]
             TL = self.posToTopleft(last)
             gold = QColor(255,255,0)
@@ -122,10 +121,10 @@ class GUI(QWidget):
         self.move(30, 80)
         self.setWindowTitle('Chess Board')
         self.show()
-        self.Restart.setGeometry(QRect(900, 50, 200, 100))
+        self.Restart.setGeometry(QRect(900, 100, 200, 100))
         self.ShowValue.setGeometry(QRect(900,250,200,100))
-        self.RandomSelfplay.setGeometry(QRect(900,450,200,100))
-        self.RandomSearchPlay.setGeometry(QRect(900,650,200,100))
+        self.RandomSelfplay.setGeometry(QRect(900,400,200,100))
+        self.RandomSearchPlay.setGeometry(QRect(900,550,200,100))
         #self.RestartVisualRun.setGeometry(QRect(900, 600, 200, 100))
         if self.agentFirst:
             self.run()
@@ -166,7 +165,7 @@ class GUI(QWidget):
 
 
     def OnRestart(self):
-        self.isshowRandom = 0
+        self.Visualization = 0
         self.clear()
         if self.agentFirst:
             self.run()
@@ -177,7 +176,7 @@ class GUI(QWidget):
         self.repaint()
 
     def OnRandomSelfplay(self):
-        self.isShowSelfplay = 1
+        self.Visualization = 1
         if self.selfplayData == None:
             self.selfplayData = dataProcessor.getLastestSelfplay()
         index = np.random.randint(0,len(self.selfplayData))
@@ -189,7 +188,7 @@ class GUI(QWidget):
         self.win = 1
 
     def OnRandomSearchPlay(self):
-        self.isShowSearchPlay = 1
+        self.Visualization = 1
         if self.searchPlayData is None:
             self.searchPlayData = dataProcessor.getLastestSearchPlay()
         index = np.random.randint(0,len(self.searchPlayData))
@@ -199,6 +198,19 @@ class GUI(QWidget):
         self.showPlay(play)
         self.update()
         self.win = 1
+
+    def OnLoadActionSequence(self):
+        self.Visualization = 1
+        if self.actionSequence is None:
+            self.actionSequence = dataProcessor.loadActionSequence()
+        index = np.random.randint(0,len(self.actionSequence))
+        play = self.actionSequence[index]
+        print(play)
+        self.clear()
+        self.showPlay(play)
+        self.update()
+        self.win = 1
+
     #def OnRestartVisual(self):
     #    self.Board.init()
     #    self.agent.init()
@@ -218,8 +230,11 @@ class GUI(QWidget):
     #    return agentMap[winner]
 
 def IntelligenceAgent(args, modelID=None):
-    model = dataProcessor.loadNetwork(args, modelID)
-    agent = Agent.IntelligentAgent(args.numOfIterations, model, randomRolloutFn)
+    if modelID is None:
+        model = PolicyValueFn.PolicyValueFn(args).to(args.device)
+    else:
+        model = dataProcessor.loadNetwork(args, modelID)
+    agent = Agent.IntelligentAgent(args.numOfIterations, model)
     return agent
 
 def NetworkAgent(args, modelID=None):
