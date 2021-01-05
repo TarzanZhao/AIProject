@@ -154,6 +154,27 @@ def Training():
     Loss = []
     WinRate = []
 
+    rollout0 = None
+    balance0 = 0
+    if args.rolloutMode == 'network':
+        rollout0 = None
+        balance0 = 0
+    elif args.rolloutMode == 'minmax':
+        rollout0 = minMaxRolloutFn(1)
+        balance0 = 1
+    elif args.rolloutMode == 'random':
+        rollout0 = randomRolloutFn(20)
+        balance0 = 1
+    elif args.rolloutMode == 'mix_minmax':
+        rollout0 = minMaxRolloutFn(1)
+        balance0 = args.balance
+    elif args.rolloutMode == 'mix_random':
+        rollout0 = randomRolloutFn(30)
+        balance0 = args.balance
+    else:
+        rollout0 = None
+        balance0 = 1
+
     for rd in range(1, args.trainround + 1):
         logger.info("round:%d" % rd)
         if currentModel != -1:
@@ -163,7 +184,8 @@ def Training():
         eta = math.log(args.trainround / rd) + 1
         file = os.path.join(args.data_folder, f"selfplay-{currentModel+1}.txt")
         #rollout =randomRolloutFn(cnt=7)
-        agent1 = Agent.SelfplayAgent(args.numOfIterations, model, file, eta,rollout=None,balance=0)
+        agent1 = Agent.SelfplayAgent(args.numOfIterations, model, file, eta,rollout=rollout0, balance=balance0)
+
         b = Board.Board(args.size, args.numberForWin)
         g = Game.Game(agent0=agent1, agent1=agent1, simulator=b)
 
@@ -198,7 +220,7 @@ def Training():
         #    replayBuffer = trainWorker.getReplayData(currentModel, dataList)
         #    timer.endTime(TimeID)
         #    timer.showTime(TimeID)
-        agentTest = Agent.IntelligentAgent(args.numOfIterations, dataProcessor.loadNetwork(args))
+        agentTest = Agent.IntelligentAgent(args.numOfIterations, dataProcessor.loadNetwork(args), rolloutFn=rollout0, balance=balance0)
 
         exp = Experiment()
         WinRate.append(exp.evaluationWithBaseLine(agentTest))

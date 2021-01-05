@@ -234,7 +234,20 @@ def IntelligenceAgent(args, modelID=None):
         model = PolicyValueFn.PolicyValueFn(args).to(args.device)
     else:
         model = dataProcessor.loadNetwork(args, modelID)
-    agent = Agent.IntelligentAgent(args.numOfIterations, model)
+
+    if args.rolloutMode == 'network':
+        agent = Agent.IntelligentAgent(args.numOfIterations, model, None, 0)
+    elif args.rolloutMode == 'minmax':
+        agent = Agent.IntelligentAgent(args.numOfIterations, model, minMaxRolloutFn(1), 1)
+    elif args.rolloutMode == 'random':
+        agent = Agent.IntelligentAgent(args.numOfIterations, model, randomRolloutFn(30), 1)
+    elif args.rolloutMode == 'mix_minmax':
+        agent = Agent.IntelligentAgent(args.numOfIterations, model, minMaxRolloutFn(1), args.balance)
+    elif args.rolloutMode == 'mix_random':
+        agent = Agent.IntelligentAgent(args.numOfIterations, model, randomRolloutFn(30), args.balance)
+    else:
+        agent = Agent.IntelligentAgent(args.numOfIterations, model, None, 1)
+
     return agent
 
 def NetworkAgent(args, modelID=None):

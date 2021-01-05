@@ -71,7 +71,7 @@ class SelfplayAgent(Agent):
         return action
 
     def finish(self, winner):
-        gamma = self.decay*(len(self.datalist)-1)
+        gamma = self.decay**(len(self.datalist)-1)
         if not self.isFinished:
             self.isFinished = 1
             for i in self.datalist:
@@ -182,8 +182,9 @@ class SearchAgent(Agent):
             finalAction = bestAction
 
         policy = [0 for i in range(simulator.getSize() ** 2)]
-        for act, prob in zip(keys, values):
-            policy[simulator.encodeAction(act)] = prob
+        policy[simulator.encodeAction(bestAction)] = 1.0
+#        for act, prob in zip(keys, values):
+#            policy[simulator.encodeAction(act)] = prob
         self.dataList.append((finalAction, policy))
         return finalAction
 

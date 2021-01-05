@@ -44,6 +44,7 @@ class Experiment():
         for i in range(0,5):
             agent2 = Agent.SearchAgent(depth=i, epsilon=0)
             dic[i] = self.evaluation(agent,agent2,agentFirstOnly=agentFirstOnly)
+        return dic
 
     def evaluationForNetworkWithDifferentSearchDepth(self,model, start= 5,end = 405, step = 50):
         """

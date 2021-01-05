@@ -45,16 +45,21 @@ def visualize(args, logger, dataProcessor):
     # model.state_dict().
     args.device = 'cpu'
     timer.clear()
-    #Interface.Play(args,Interface.NetworkAgent(args, args.modelID))
-    Interface.Play(args, Interface.IntelligenceAgent(args, args.modelID))
-    # Interface.Play(args, Agent.SearchAgent(3,epsilon=0.05))
+    if args.visualize == 'network':
+        Interface.Play(args,Interface.NetworkAgent(args, args.modelID))
+    elif args.visualize == 'intelligent':
+        Interface.Play(args, Interface.IntelligenceAgent(args, args.modelID))
+    elif args.visualize == 'minmax':
+        Interface.Play(args, Agent.SearchAgent(3,epsilon=0.05))
 
 
 def experiment(args, logger, dataProcessor):
     exp = Experiment.Experiment()
 
-    model = PolicyValueFn.PolicyValueFn(args).to(args.device)
-    data = exp.evaluationForNetworkWithFourRollout(model,start=10,end=50,step=10,random_cnt=1,numOfEvaluations=1)
+    model = dataProcessor.loadNetwork(args, 0)
+    #PolicyValueFn.PolicyValueFn(args).to(args.device)
+    data = exp.evaluationWithDifferentMinMaxSearchAgent(model)
+#    data = exp.evaluationForNetworkWithFourRollout(model,start=10,end=50,step=10,random_cnt=1,numOfEvaluations=1)
     logger.info(data)
 
 def sampledata(args, logger, dataProcessor):

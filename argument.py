@@ -11,6 +11,7 @@ def initialize_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--todo',choices=['visualize', 'selfplaytrain', 'experiment', 'sampledata', 'supervisedtrain'], default='visualize')
+    parser.add_argument('--visualize',choices=['network', 'intelligent', 'minmax'], default='network')
 
     parser.add_argument('--channels', type=int, default=4)
     parser.add_argument('--size', type=int, default=10)
@@ -29,6 +30,8 @@ def initialize_args():
     parser.add_argument('--buffersize', type=int, default=256)
     parser.add_argument('--openReplayBuffer', type=bool, default=1)
     parser.add_argument('--maxBufferSize', type=int, default=4096)
+    parser.add_argument('--rolloutMode',choices=['network', 'random', 'minmax', 'mix_random', 'mix_minmax', 'greedy'], default='network')
+    parser.add_argument('--balance', type=float, default=0.8)
 
     parser.add_argument('--sampleRound', type=int, default=20)
     parser.add_argument('--sampleSize', type=int, default=500)
@@ -68,6 +71,7 @@ def initialize_args():
         makedirs(args.model_folder)
     if not args.todo in ['visualize', 'supervisedtrain']:
         makedirs(args.data_folder)
+    makedirs(args.figure_folder)
 
 def get_args():
     return args
